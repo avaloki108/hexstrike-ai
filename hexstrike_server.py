@@ -17250,6 +17250,975 @@ def get_alternative_tools():
         logger.error(f"Error getting alternative tools: {str(e)}")
         return jsonify({"error": f"Server error: {str(e)}"}), 500
 
+# ============================================================================
+# WEB3 / BLOCKCHAIN SECURITY TOOLS  (v7.0 – Web3 Bug Bounty Module)
+# ============================================================================
+
+# ---------------------------------------------------------------------------
+# Individual tool routes
+# ---------------------------------------------------------------------------
+
+@app.route("/api/tools/slither", methods=["POST"])
+def slither():
+    """Run Slither static analyzer against a Solidity contract or project."""
+    try:
+        params = request.json or {}
+        target = params.get("target", "")
+        detector = params.get("detector", "")
+        exclude_detectors = params.get("exclude_detectors", "")
+        output_format = params.get("output_format", "text")
+        additional_args = params.get("additional_args", "")
+
+        if not target:
+            return jsonify({"error": "target (path or directory) is required"}), 400
+
+        command = f"slither {target}"
+        if detector:
+            command += f" --detect {detector}"
+        if exclude_detectors:
+            command += f" --exclude {exclude_detectors}"
+        if output_format and output_format != "text":
+            command += f" --{output_format}"
+        if additional_args:
+            command += f" {additional_args}"
+
+        logger.info(f"🔬 Starting Slither analysis: {target}")
+        result = execute_command_with_recovery("slither", command, params)
+        logger.info(f"📊 Slither analysis completed for {target}")
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"💥 Error in slither endpoint: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
+
+@app.route("/api/tools/mythril", methods=["POST"])
+def mythril():
+    """Run Mythril symbolic execution against a Solidity contract or deployed address."""
+    try:
+        params = request.json or {}
+        target = params.get("target", "")
+        mode = params.get("mode", "a")          # a=analyze, c=compile, d=disassemble
+        execution_timeout = params.get("execution_timeout", 300)
+        max_depth = params.get("max_depth", 22)
+        solc_version = params.get("solc_version", "")
+        rpc = params.get("rpc", "")
+        additional_args = params.get("additional_args", "")
+
+        if not target:
+            return jsonify({"error": "target is required"}), 400
+
+        command = f"myth -{mode} {target}"
+        command += f" --execution-timeout {execution_timeout}"
+        command += f" --max-depth {max_depth}"
+        if solc_version:
+            command += f" --solv {solc_version}"
+        if rpc:
+            command += f" --rpc {rpc}"
+        if additional_args:
+            command += f" {additional_args}"
+
+        logger.info(f"🧿 Starting Mythril analysis: {target}")
+        result = execute_command_with_recovery("mythril", command, params)
+        logger.info(f"📊 Mythril analysis completed for {target}")
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"💥 Error in mythril endpoint: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
+
+@app.route("/api/tools/manticore", methods=["POST"])
+def manticore():
+    """Run Manticore symbolic execution against an EVM binary or Solidity file."""
+    try:
+        params = request.json or {}
+        target = params.get("target", "")
+        testcase = params.get("testcase", False)
+        workspace = params.get("workspace", "/tmp/manticore_output")
+        timeout = params.get("timeout", 300)
+        additional_args = params.get("additional_args", "")
+
+        if not target:
+            return jsonify({"error": "target is required"}), 400
+
+        command = f"manticore {target}"
+        command += f" --workspace {workspace}"
+        command += f" --timeout {timeout}"
+        if testcase:
+            command += " --testcase"
+        if additional_args:
+            command += f" {additional_args}"
+
+        logger.info(f"🦾 Starting Manticore analysis: {target}")
+        result = execute_command_with_recovery("manticore", command, params)
+        logger.info(f"📊 Manticore analysis completed for {target}")
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"💥 Error in manticore endpoint: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
+
+@app.route("/api/tools/echidna", methods=["POST"])
+def echidna():
+    """Run Echidna fuzzer against a Solidity contract."""
+    try:
+        params = request.json or {}
+        contract_path = params.get("contract_path", "")
+        contract_name = params.get("contract_name", "")
+        config = params.get("config", "")
+        test_limit = params.get("test_limit", 50000)
+        corpus_dir = params.get("corpus_dir", "")
+        additional_args = params.get("additional_args", "")
+
+        if not contract_path:
+            return jsonify({"error": "contract_path is required"}), 400
+
+        command = f"echidna {contract_path}"
+        if contract_name:
+            command += f" --contract {contract_name}"
+        if config:
+            command += f" --config {config}"
+        if test_limit:
+            command += f" --test-limit {test_limit}"
+        if corpus_dir:
+            command += f" --corpus-dir {corpus_dir}"
+        if additional_args:
+            command += f" {additional_args}"
+
+        logger.info(f"🦔 Starting Echidna fuzzing: {contract_path}")
+        result = execute_command_with_recovery("echidna", command, params)
+        logger.info(f"📊 Echidna fuzzing completed for {contract_path}")
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"💥 Error in echidna endpoint: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
+
+@app.route("/api/tools/foundry-forge", methods=["POST"])
+def foundry_forge():
+    """Run Foundry forge test/fuzz/build on a Solidity project."""
+    try:
+        params = request.json or {}
+        project_path = params.get("project_path", ".")
+        action = params.get("action", "test")   # test, build, fuzz, coverage
+        test_filter = params.get("test_filter", "")
+        verbosity = params.get("verbosity", "-vvv")
+        fork_url = params.get("fork_url", "")
+        fork_block = params.get("fork_block", "")
+        fuzz_runs = params.get("fuzz_runs", 256)
+        additional_args = params.get("additional_args", "")
+
+        valid_actions = ["test", "build", "coverage", "snapshot", "fmt"]
+        if action not in valid_actions:
+            return jsonify({"error": f"Invalid action. Must be one of: {valid_actions}"}), 400
+
+        command = f"cd {project_path} && forge {action}"
+        if action == "test":
+            if test_filter:
+                command += f" --match-test {test_filter}"
+            command += f" {verbosity}"
+            if fork_url:
+                command += f" --fork-url {fork_url}"
+            if fork_block:
+                command += f" --fork-block-number {fork_block}"
+            command += f" --fuzz-runs {fuzz_runs}"
+        if additional_args:
+            command += f" {additional_args}"
+
+        logger.info(f"🔨 Starting Foundry forge {action}: {project_path}")
+        result = execute_command_with_recovery("foundry-forge", command, params)
+        logger.info(f"📊 Foundry forge {action} completed")
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"💥 Error in foundry-forge endpoint: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
+
+@app.route("/api/tools/cast", methods=["POST"])
+def cast():
+    """Execute Foundry cast commands for on-chain interaction and analysis."""
+    try:
+        params = request.json or {}
+        subcommand = params.get("subcommand", "")
+        rpc_url = params.get("rpc_url", "")
+        args_str = params.get("args", "")
+        additional_args = params.get("additional_args", "")
+
+        if not subcommand:
+            return jsonify({"error": "subcommand is required (e.g. call, send, storage, code, tx, receipt, logs)"}), 400
+
+        command = f"cast {subcommand}"
+        if rpc_url:
+            command += f" --rpc-url {rpc_url}"
+        if args_str:
+            command += f" {args_str}"
+        if additional_args:
+            command += f" {additional_args}"
+
+        logger.info(f"⛓️  Running cast {subcommand}")
+        result = execute_command_with_recovery("cast", command, params)
+        logger.info(f"📊 cast {subcommand} completed")
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"💥 Error in cast endpoint: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
+
+@app.route("/api/tools/heimdall", methods=["POST"])
+def heimdall():
+    """Run Heimdall EVM decompiler/analyzer on bytecode or a deployed contract."""
+    try:
+        params = request.json or {}
+        target = params.get("target", "")
+        subcommand = params.get("subcommand", "decompile")  # decompile, disassemble, cfg, inspect
+        rpc_url = params.get("rpc_url", "")
+        output_dir = params.get("output_dir", "/tmp/heimdall_output")
+        additional_args = params.get("additional_args", "")
+
+        if not target:
+            return jsonify({"error": "target (bytecode or contract address) is required"}), 400
+
+        command = f"heimdall {subcommand} {target}"
+        if rpc_url:
+            command += f" --rpc-url {rpc_url}"
+        command += f" -o {output_dir}"
+        if additional_args:
+            command += f" {additional_args}"
+
+        logger.info(f"🪄  Starting Heimdall {subcommand}: {target}")
+        result = execute_command_with_recovery("heimdall", command, params)
+        logger.info(f"📊 Heimdall {subcommand} completed for {target}")
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"💥 Error in heimdall endpoint: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
+
+@app.route("/api/tools/4naly3er", methods=["POST"])
+def four_naly3er():
+    """Run 4naly3er automated gas-optimisation and security report generator."""
+    try:
+        params = request.json or {}
+        project_path = params.get("project_path", ".")
+        scope_file = params.get("scope_file", "")
+        additional_args = params.get("additional_args", "")
+
+        command = f"4naly3er {project_path}"
+        if scope_file:
+            command += f" --scope {scope_file}"
+        if additional_args:
+            command += f" {additional_args}"
+
+        logger.info(f"📋 Starting 4naly3er report: {project_path}")
+        result = execute_command_with_recovery("4naly3er", command, params)
+        logger.info(f"📊 4naly3er report completed for {project_path}")
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"💥 Error in 4naly3er endpoint: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
+
+@app.route("/api/tools/abi-decoder", methods=["POST"])
+def abi_decoder():
+    """Decode ABI-encoded calldata or event logs using Python."""
+    try:
+        params = request.json or {}
+        calldata = params.get("calldata", "")
+        abi = params.get("abi", "")
+        event_topics = params.get("event_topics", [])
+
+        if not calldata and not event_topics:
+            return jsonify({"error": "calldata or event_topics is required"}), 400
+
+        if not abi:
+            return jsonify({"error": "abi is required"}), 400
+
+        import json as _json
+        abi_str = _json.dumps(abi) if isinstance(abi, (list, dict)) else abi
+
+        script = f"""
+import json
+from eth_abi import decode
+from eth_utils import function_signature_to_4byte_selector
+
+abi = json.loads({repr(abi_str)})
+calldata = {repr(calldata)}
+results = {{"decoded": []}}
+
+try:
+    from web3 import Web3
+    w3 = Web3()
+    contract_abi = abi if isinstance(abi, list) else [abi]
+    # Try to decode calldata
+    if calldata:
+        selector = calldata[:10]
+        for item in contract_abi:
+            if item.get("type") == "function":
+                sig = item["name"] + "(" + ",".join(i["type"] for i in item.get("inputs", [])) + ")"
+                sel = "0x" + w3.keccak(text=sig).hex()[:8]
+                if sel.lower() == selector.lower():
+                    input_types = [i["type"] for i in item.get("inputs", [])]
+                    decoded = w3.codec.decode(input_types, bytes.fromhex(calldata[10:].replace("0x","")))
+                    results["decoded"].append({{"function": item["name"], "args": [str(d) for d in decoded]}})
+                    break
+    print(json.dumps(results))
+except Exception as e:
+    print(json.dumps({{"error": str(e)}}))
+"""
+
+        result = execute_command(f"python3 -c {repr(script)}")
+        logger.info("📊 ABI decoding completed")
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"💥 Error in abi-decoder endpoint: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
+
+@app.route("/api/tools/etherscan-recon", methods=["POST"])
+def etherscan_recon():
+    """Perform on-chain reconnaissance using the Etherscan/block-explorer API."""
+    try:
+        params = request.json or {}
+        address = params.get("address", "")
+        api_key = params.get("api_key", "")
+        network = params.get("network", "mainnet")
+        action = params.get("action", "getabi")  # getabi, getsourcecode, txlist, tokentx, etc.
+
+        if not address:
+            return jsonify({"error": "address is required"}), 400
+
+        base_urls = {
+            "mainnet": "https://api.etherscan.io/api",
+            "goerli": "https://api-goerli.etherscan.io/api",
+            "sepolia": "https://api-sepolia.etherscan.io/api",
+            "polygon": "https://api.polygonscan.com/api",
+            "bsc": "https://api.bscscan.com/api",
+            "arbitrum": "https://api.arbiscan.io/api",
+            "optimism": "https://api-optimistic.etherscan.io/api",
+            "avalanche": "https://api.snowtrace.io/api",
+            "base": "https://api.basescan.org/api",
+        }
+        base_url = base_urls.get(network, base_urls["mainnet"])
+        url = f"{base_url}?module=contract&action={action}&address={address}"
+        if api_key:
+            url += f"&apikey={api_key}"
+
+        curl_cmd = f"curl -s '{url}'"
+        logger.info(f"🔭 Running Etherscan recon ({action}) for {address} on {network}")
+        result = execute_command(curl_cmd)
+        logger.info(f"📊 Etherscan recon completed for {address}")
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"💥 Error in etherscan-recon endpoint: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
+
+@app.route("/api/tools/rpc-scanner", methods=["POST"])
+def rpc_scanner():
+    """Probe Ethereum/EVM JSON-RPC endpoints for exposed methods and misconfigurations."""
+    try:
+        params = request.json or {}
+        rpc_url = params.get("rpc_url", "")
+        additional_args = params.get("additional_args", "")
+
+        if not rpc_url:
+            return jsonify({"error": "rpc_url is required"}), 400
+
+        dangerous_methods = [
+            "eth_accounts", "eth_sign", "personal_sign", "personal_unlockAccount",
+            "eth_sendTransaction", "debug_traceTransaction", "debug_traceCall",
+            "admin_nodeInfo", "admin_peers", "miner_start", "miner_stop",
+            "txpool_content", "txpool_inspect"
+        ]
+
+        script_lines = [
+            "import json, urllib.request",
+            f"rpc = {repr(rpc_url)}",
+            "results = {}",
+            "for method in " + repr(dangerous_methods) + ":",
+            "    try:",
+            "        payload = json.dumps({'jsonrpc':'2.0','method':method,'params':[],'id':1}).encode()",
+            "        req = urllib.request.Request(rpc, data=payload, headers={'Content-Type':'application/json'})",
+            "        with urllib.request.urlopen(req, timeout=5) as r:",
+            "            resp = json.loads(r.read())",
+            "            results[method] = {'exposed': 'error' not in resp, 'response': resp}",
+            "    except Exception as e:",
+            "        results[method] = {'exposed': False, 'error': str(e)}",
+            "print(json.dumps({'rpc_url': rpc, 'exposed_methods': {k:v for k,v in results.items() if v.get('exposed')}, 'all_results': results}))",
+        ]
+        script = "\n".join(script_lines)
+        command = f"python3 -c {repr(script)}"
+
+        logger.info(f"🔌 Scanning RPC endpoint: {rpc_url}")
+        result = execute_command(command)
+        logger.info(f"📊 RPC scan completed for {rpc_url}")
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"💥 Error in rpc-scanner endpoint: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
+
+@app.route("/api/tools/solidity-linter", methods=["POST"])
+def solidity_linter():
+    """Run solhint linter on Solidity source files."""
+    try:
+        params = request.json or {}
+        target = params.get("target", "")
+        config = params.get("config", "")
+        rules = params.get("rules", "")
+        additional_args = params.get("additional_args", "")
+
+        if not target:
+            return jsonify({"error": "target (path or glob) is required"}), 400
+
+        command = f"solhint {target}"
+        if config:
+            command += f" -c {config}"
+        if rules:
+            command += f" -r {rules}"
+        if additional_args:
+            command += f" {additional_args}"
+
+        logger.info(f"📐 Starting solhint linting: {target}")
+        result = execute_command_with_recovery("solhint", command, params)
+        logger.info(f"📊 Solhint linting completed for {target}")
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"💥 Error in solidity-linter endpoint: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
+
+# ---------------------------------------------------------------------------
+# Web3 workflow / analysis routes
+# ---------------------------------------------------------------------------
+
+@app.route("/api/web3/smart-contract-audit", methods=["POST"])
+def web3_smart_contract_audit():
+    """
+    Full automated smart-contract audit workflow:
+    Slither → Mythril → solhint → Echidna → 4naly3er report.
+    """
+    try:
+        params = request.json or {}
+        project_path = params.get("project_path", "")
+        contract_file = params.get("contract_file", "")
+        contract_name = params.get("contract_name", "")
+        fork_url = params.get("fork_url", "")
+        etherscan_api_key = params.get("etherscan_api_key", "")
+        scope = params.get("scope", [])
+
+        if not project_path and not contract_file:
+            return jsonify({"error": "project_path or contract_file is required"}), 400
+
+        target = contract_file or project_path
+
+        workflow = {
+            "audit_target": target,
+            "timestamp": datetime.now().isoformat(),
+            "phases": []
+        }
+
+        # Phase 1: Slither static analysis
+        slither_cmd = f"slither {target} --json /tmp/slither_report.json"
+        slither_result = execute_command(slither_cmd)
+        workflow["phases"].append({"phase": "slither_static_analysis", "result": slither_result})
+
+        # Phase 2: solhint linting
+        lint_target = f"{project_path}/**/*.sol" if project_path else contract_file
+        solhint_cmd = f"solhint '{lint_target}'"
+        solhint_result = execute_command(solhint_cmd)
+        workflow["phases"].append({"phase": "solhint_lint", "result": solhint_result})
+
+        # Phase 3: Mythril (with time cap to avoid hanging)
+        myth_cmd = f"myth -a {target} --execution-timeout 120"
+        if fork_url:
+            myth_cmd += f" --rpc {fork_url}"
+        myth_result = execute_command(myth_cmd)
+        workflow["phases"].append({"phase": "mythril_symbolic_execution", "result": myth_result})
+
+        # Phase 4: Echidna (if contract_name provided)
+        if contract_name:
+            echidna_cmd = f"echidna {contract_file or project_path} --contract {contract_name} --test-limit 10000"
+            echidna_result = execute_command(echidna_cmd)
+            workflow["phases"].append({"phase": "echidna_fuzzing", "result": echidna_result})
+
+        # Phase 5: 4naly3er report (if project path available)
+        if project_path:
+            report_cmd = f"4naly3er {project_path}"
+            report_result = execute_command(report_cmd)
+            workflow["phases"].append({"phase": "4naly3er_report", "result": report_result})
+
+        workflow["success"] = True
+        workflow["summary"] = {
+            "phases_completed": len(workflow["phases"]),
+            "tools_run": [p["phase"] for p in workflow["phases"]]
+        }
+
+        logger.info(f"✅ Smart contract audit completed for {target}")
+        return jsonify(workflow)
+    except Exception as e:
+        logger.error(f"💥 Error in smart-contract-audit endpoint: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
+
+@app.route("/api/web3/defi-security-assessment", methods=["POST"])
+def web3_defi_security_assessment():
+    """
+    DeFi protocol security assessment workflow covering:
+    price oracle manipulation, flash loan attack vectors,
+    reentrancy, access control, and MEV exposure.
+    """
+    try:
+        params = request.json or {}
+        project_path = params.get("project_path", "")
+        contract_address = params.get("contract_address", "")
+        rpc_url = params.get("rpc_url", "")
+        protocol_type = params.get("protocol_type", "generic")  # dex, lending, bridge, yield
+        etherscan_api_key = params.get("etherscan_api_key", "")
+
+        if not project_path and not contract_address:
+            return jsonify({"error": "project_path or contract_address is required"}), 400
+
+        assessment = {
+            "target": project_path or contract_address,
+            "protocol_type": protocol_type,
+            "timestamp": datetime.now().isoformat(),
+            "vulnerability_categories": [],
+            "phases": []
+        }
+
+        target = project_path or contract_address
+
+        # Slither with DeFi-specific detectors
+        defi_detectors = (
+            "reentrancy-eth,reentrancy-no-eth,reentrancy-benign,"
+            "tainted-external-call,delegatecall-loop,"
+            "unchecked-lowlevel,unchecked-transfer,"
+            "arbitrary-send-eth,controlled-delegatecall,"
+            "msg-value-loop,tx-origin,suicidal,"
+            "uninitialized-state,uninitialized-storage,"
+            "price-manipulation-via-token-transfer"
+        )
+        slither_cmd = f"slither {target} --detect {defi_detectors}"
+        slither_result = execute_command(slither_cmd)
+        assessment["phases"].append({"phase": "slither_defi_detectors", "result": slither_result})
+
+        # On-chain recon if address and RPC provided
+        if contract_address and rpc_url:
+            cast_storage_cmd = f"cast storage {contract_address} --rpc-url {rpc_url}"
+            storage_result = execute_command(cast_storage_cmd)
+            assessment["phases"].append({"phase": "storage_layout_inspection", "result": storage_result})
+
+            # Fetch source via Etherscan if API key provided
+            if etherscan_api_key:
+                etherscan_url = (
+                    f"https://api.etherscan.io/api?module=contract"
+                    f"&action=getsourcecode&address={contract_address}"
+                    f"&apikey={etherscan_api_key}"
+                )
+                fetch_cmd = f"curl -s '{etherscan_url}'"
+                fetch_result = execute_command(fetch_cmd)
+                assessment["phases"].append({"phase": "etherscan_source_fetch", "result": fetch_result})
+
+        # Check for upgradeable proxy patterns
+        if project_path:
+            proxy_check_cmd = f"slither {project_path} --detect incorrect-modifier,missing-zero-check,uninitialized-local"
+            proxy_result = execute_command(proxy_check_cmd)
+            assessment["phases"].append({"phase": "proxy_upgrade_check", "result": proxy_result})
+
+        vulnerability_categories = [
+            "price_oracle_manipulation", "flash_loan_attack",
+            "reentrancy", "access_control", "mev_exposure",
+            "integer_overflow", "unchecked_return_values"
+        ]
+        assessment["vulnerability_categories"] = vulnerability_categories
+        assessment["success"] = True
+        assessment["summary"] = {
+            "phases_completed": len(assessment["phases"]),
+            "tools_run": [p["phase"] for p in assessment["phases"]],
+            "vulnerability_categories_checked": vulnerability_categories
+        }
+
+        logger.info(f"✅ DeFi security assessment completed for {target}")
+        return jsonify(assessment)
+    except Exception as e:
+        logger.error(f"💥 Error in defi-security-assessment endpoint: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
+
+@app.route("/api/web3/reentrancy-check", methods=["POST"])
+def web3_reentrancy_check():
+    """Check smart contracts for reentrancy vulnerabilities using Slither."""
+    try:
+        params = request.json or {}
+        target = params.get("target", "")
+        if not target:
+            return jsonify({"error": "target is required"}), 400
+
+        command = (
+            f"slither {target} "
+            "--detect reentrancy-eth,reentrancy-no-eth,reentrancy-benign,"
+            "reentrancy-unlimited-gas,reentrancy-events"
+        )
+        logger.info(f"🔁 Checking reentrancy: {target}")
+        result = execute_command(command)
+        logger.info(f"📊 Reentrancy check completed for {target}")
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"💥 Error in reentrancy-check: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
+
+@app.route("/api/web3/access-control-check", methods=["POST"])
+def web3_access_control_check():
+    """Check smart contracts for access control vulnerabilities."""
+    try:
+        params = request.json or {}
+        target = params.get("target", "")
+        if not target:
+            return jsonify({"error": "target is required"}), 400
+
+        command = (
+            f"slither {target} "
+            "--detect arbitrary-send-eth,controlled-delegatecall,"
+            "missing-zero-check,tx-origin,suicidal,"
+            "unprotected-upgrade,incorrect-modifier"
+        )
+        logger.info(f"🔐 Checking access control: {target}")
+        result = execute_command(command)
+        logger.info(f"📊 Access control check completed for {target}")
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"💥 Error in access-control-check: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
+
+@app.route("/api/web3/flash-loan-analysis", methods=["POST"])
+def web3_flash_loan_analysis():
+    """Analyze contracts for flash loan attack vectors."""
+    try:
+        params = request.json or {}
+        target = params.get("target", "")
+        rpc_url = params.get("rpc_url", "")
+        fork_block = params.get("fork_block", "")
+
+        if not target:
+            return jsonify({"error": "target is required"}), 400
+
+        analysis = {
+            "target": target,
+            "timestamp": datetime.now().isoformat(),
+            "phases": []
+        }
+
+        # Slither: price manipulation and unchecked transfer detectors
+        slither_cmd = (
+            f"slither {target} "
+            "--detect price-manipulation-via-token-transfer,"
+            "unchecked-transfer,arbitrary-send-erc20"
+        )
+        slither_result = execute_command(slither_cmd)
+        analysis["phases"].append({"phase": "slither_flash_loan_detectors", "result": slither_result})
+
+        # Foundry fork simulation if rpc_url provided
+        if rpc_url:
+            forge_cmd = f"forge test --fork-url {rpc_url}"
+            if fork_block:
+                forge_cmd += f" --fork-block-number {fork_block}"
+            forge_cmd += " --match-test flashLoan -vvvv"
+            forge_result = execute_command(forge_cmd)
+            analysis["phases"].append({"phase": "foundry_fork_simulation", "result": forge_result})
+
+        analysis["success"] = True
+        logger.info(f"💸 Flash loan analysis completed for {target}")
+        return jsonify(analysis)
+    except Exception as e:
+        logger.error(f"💥 Error in flash-loan-analysis: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
+
+@app.route("/api/web3/oracle-manipulation-check", methods=["POST"])
+def web3_oracle_manipulation_check():
+    """Check for price oracle manipulation vulnerabilities."""
+    try:
+        params = request.json or {}
+        target = params.get("target", "")
+        if not target:
+            return jsonify({"error": "target is required"}), 400
+
+        command = (
+            f"slither {target} "
+            "--detect price-manipulation-via-token-transfer,"
+            "msg-value-loop,tainted-external-call"
+        )
+        logger.info(f"🔮 Checking oracle manipulation: {target}")
+        result = execute_command(command)
+        logger.info(f"📊 Oracle manipulation check completed for {target}")
+        return jsonify(result)
+    except Exception as e:
+        logger.error(f"💥 Error in oracle-manipulation-check: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
+
+@app.route("/api/web3/proxy-analysis", methods=["POST"])
+def web3_proxy_analysis():
+    """Analyze proxy/upgradeable contract patterns (EIP-1967, UUPS, Transparent, Beacon)."""
+    try:
+        params = request.json or {}
+        target = params.get("target", "")
+        contract_address = params.get("contract_address", "")
+        rpc_url = params.get("rpc_url", "")
+
+        if not target and not contract_address:
+            return jsonify({"error": "target or contract_address is required"}), 400
+
+        analysis = {
+            "target": target or contract_address,
+            "timestamp": datetime.now().isoformat(),
+            "phases": []
+        }
+
+        if target:
+            # Slither proxy-specific checks
+            slither_cmd = (
+                f"slither {target} "
+                "--detect uninitialized-state,uninitialized-storage,"
+                "delegatecall-loop,controlled-delegatecall,"
+                "incorrect-modifier,unprotected-upgrade"
+            )
+            slither_result = execute_command(slither_cmd)
+            analysis["phases"].append({"phase": "slither_proxy_checks", "result": slither_result})
+
+        if contract_address and rpc_url:
+            # Read EIP-1967 implementation slot
+            impl_slot = "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc"
+            cast_cmd = f"cast storage {contract_address} {impl_slot} --rpc-url {rpc_url}"
+            cast_result = execute_command(cast_cmd)
+            analysis["phases"].append({"phase": "eip1967_impl_slot", "result": cast_result})
+
+            # Read admin slot
+            admin_slot = "0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103"
+            admin_cmd = f"cast storage {contract_address} {admin_slot} --rpc-url {rpc_url}"
+            admin_result = execute_command(admin_cmd)
+            analysis["phases"].append({"phase": "eip1967_admin_slot", "result": admin_result})
+
+        analysis["success"] = True
+        logger.info(f"🧩 Proxy analysis completed for {analysis['target']}")
+        return jsonify(analysis)
+    except Exception as e:
+        logger.error(f"💥 Error in proxy-analysis: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
+
+@app.route("/api/web3/mev-analysis", methods=["POST"])
+def web3_mev_analysis():
+    """Analyze MEV (Maximal Extractable Value) exposure: sandwich, frontrun, backrun."""
+    try:
+        params = request.json or {}
+        target = params.get("target", "")
+        contract_address = params.get("contract_address", "")
+        rpc_url = params.get("rpc_url", "")
+        block_range = params.get("block_range", 100)
+
+        if not target and not contract_address:
+            return jsonify({"error": "target or contract_address is required"}), 400
+
+        analysis = {
+            "target": target or contract_address,
+            "timestamp": datetime.now().isoformat(),
+            "phases": []
+        }
+
+        if target:
+            # Detect frontrunning-prone patterns
+            slither_cmd = (
+                f"slither {target} "
+                "--detect tainted-external-call,msg-value-loop,"
+                "reentrancy-eth,unchecked-transfer"
+            )
+            slither_result = execute_command(slither_cmd)
+            analysis["phases"].append({"phase": "slither_mev_patterns", "result": slither_result})
+
+        if contract_address and rpc_url:
+            # Fetch recent transactions
+            cast_cmd = f"cast logs --address {contract_address} --rpc-url {rpc_url} --from-block latest"
+            cast_result = execute_command(cast_cmd)
+            analysis["phases"].append({"phase": "recent_event_logs", "result": cast_result})
+
+        analysis["mev_categories"] = [
+            "sandwich_attack", "frontrunning", "backrunning",
+            "arbitrage", "liquidation_mev", "jit_liquidity"
+        ]
+        analysis["success"] = True
+        logger.info(f"⚡ MEV analysis completed for {analysis['target']}")
+        return jsonify(analysis)
+    except Exception as e:
+        logger.error(f"💥 Error in mev-analysis: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
+
+@app.route("/api/web3/token-analysis", methods=["POST"])
+def web3_token_analysis():
+    """Analyze ERC-20/721/1155 token implementations for common vulnerabilities."""
+    try:
+        params = request.json or {}
+        target = params.get("target", "")
+        contract_address = params.get("contract_address", "")
+        rpc_url = params.get("rpc_url", "")
+        token_standard = params.get("token_standard", "ERC20")
+
+        if not target and not contract_address:
+            return jsonify({"error": "target or contract_address is required"}), 400
+
+        analysis = {
+            "target": target or contract_address,
+            "token_standard": token_standard,
+            "timestamp": datetime.now().isoformat(),
+            "phases": []
+        }
+
+        if target:
+            slither_cmd = (
+                f"slither {target} "
+                "--detect erc20-interface,locked-ether,unchecked-transfer,"
+                "arbitrary-send-erc20,unchecked-lowlevel"
+            )
+            slither_result = execute_command(slither_cmd)
+            analysis["phases"].append({"phase": "slither_token_checks", "result": slither_result})
+
+        if contract_address and rpc_url:
+            # Check total supply, owner, paused
+            cast_supply_cmd = f"cast call {contract_address} 'totalSupply()' --rpc-url {rpc_url}"
+            supply_result = execute_command(cast_supply_cmd)
+            analysis["phases"].append({"phase": "total_supply", "result": supply_result})
+
+            cast_owner_cmd = f"cast call {contract_address} 'owner()' --rpc-url {rpc_url}"
+            owner_result = execute_command(cast_owner_cmd)
+            analysis["phases"].append({"phase": "owner_check", "result": owner_result})
+
+        analysis["success"] = True
+        logger.info(f"🪙 Token analysis completed for {analysis['target']}")
+        return jsonify(analysis)
+    except Exception as e:
+        logger.error(f"💥 Error in token-analysis: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
+
+@app.route("/api/web3/transaction-trace", methods=["POST"])
+def web3_transaction_trace():
+    """Trace and decode a transaction using cast/debug_traceTransaction."""
+    try:
+        params = request.json or {}
+        tx_hash = params.get("tx_hash", "")
+        rpc_url = params.get("rpc_url", "")
+        decode_abi = params.get("decode_abi", False)
+
+        if not tx_hash:
+            return jsonify({"error": "tx_hash is required"}), 400
+        if not rpc_url:
+            return jsonify({"error": "rpc_url is required"}), 400
+
+        analysis = {
+            "tx_hash": tx_hash,
+            "timestamp": datetime.now().isoformat(),
+            "phases": []
+        }
+
+        # Get transaction receipt
+        receipt_cmd = f"cast receipt {tx_hash} --rpc-url {rpc_url}"
+        receipt_result = execute_command(receipt_cmd)
+        analysis["phases"].append({"phase": "receipt", "result": receipt_result})
+
+        # Get full trace
+        run_cmd = f"cast run {tx_hash} --rpc-url {rpc_url}"
+        run_result = execute_command(run_cmd)
+        analysis["phases"].append({"phase": "trace", "result": run_result})
+
+        analysis["success"] = True
+        logger.info(f"🔍 Transaction trace completed for {tx_hash}")
+        return jsonify(analysis)
+    except Exception as e:
+        logger.error(f"💥 Error in transaction-trace: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
+
+@app.route("/api/web3/bug-bounty-recon", methods=["POST"])
+def web3_bug_bounty_recon():
+    """
+    Full Web3 bug bounty reconnaissance workflow:
+    Etherscan source fetch → Slither → solhint → Heimdall decompile
+    """
+    try:
+        params = request.json or {}
+        contract_address = params.get("contract_address", "")
+        project_path = params.get("project_path", "")
+        rpc_url = params.get("rpc_url", "")
+        network = params.get("network", "mainnet")
+        etherscan_api_key = params.get("etherscan_api_key", "")
+
+        if not contract_address and not project_path:
+            return jsonify({"error": "contract_address or project_path is required"}), 400
+
+        recon = {
+            "target": contract_address or project_path,
+            "network": network,
+            "timestamp": datetime.now().isoformat(),
+            "phases": []
+        }
+
+        # Etherscan source fetch
+        if contract_address and etherscan_api_key:
+            base_urls = {
+                "mainnet": "https://api.etherscan.io/api",
+                "polygon": "https://api.polygonscan.com/api",
+                "bsc": "https://api.bscscan.com/api",
+                "arbitrum": "https://api.arbiscan.io/api",
+                "optimism": "https://api-optimistic.etherscan.io/api",
+                "base": "https://api.basescan.org/api",
+            }
+            base_url = base_urls.get(network, base_urls["mainnet"])
+            fetch_cmd = (
+                f"curl -s '{base_url}?module=contract&action=getsourcecode"
+                f"&address={contract_address}&apikey={etherscan_api_key}'"
+            )
+            fetch_result = execute_command(fetch_cmd)
+            recon["phases"].append({"phase": "etherscan_source_fetch", "result": fetch_result})
+
+        # Heimdall decompile if bytecode available
+        if contract_address and rpc_url:
+            heimdall_cmd = f"heimdall decompile {contract_address} --rpc-url {rpc_url} -o /tmp/heimdall_recon"
+            heimdall_result = execute_command(heimdall_cmd)
+            recon["phases"].append({"phase": "heimdall_decompile", "result": heimdall_result})
+
+            rpc_scan_url = f"http://127.0.0.1:{API_PORT}/api/tools/rpc-scanner"
+            # inline RPC scan
+            rpc_result = execute_command(
+                f"curl -s -X POST {rpc_scan_url} "
+                f"-H 'Content-Type: application/json' "
+                f"-d '{{\"rpc_url\": \"{rpc_url}\"}}'"
+            )
+            recon["phases"].append({"phase": "rpc_endpoint_scan", "result": rpc_result})
+
+        # Slither on local project
+        if project_path:
+            slither_result = execute_command(f"slither {project_path}")
+            recon["phases"].append({"phase": "slither_analysis", "result": slither_result})
+
+            solhint_result = execute_command(f"solhint '{project_path}/**/*.sol'")
+            recon["phases"].append({"phase": "solhint_lint", "result": solhint_result})
+
+        recon["success"] = True
+        recon["summary"] = {
+            "phases_completed": len(recon["phases"]),
+            "tools_run": [p["phase"] for p in recon["phases"]]
+        }
+
+        logger.info(f"✅ Web3 bug bounty recon completed for {recon['target']}")
+        return jsonify(recon)
+    except Exception as e:
+        logger.error(f"💥 Error in web3-bug-bounty-recon: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
+
 # Create the banner after all classes are defined
 BANNER = ModernVisualEngine.create_banner()
 

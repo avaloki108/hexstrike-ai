@@ -2,21 +2,22 @@
 
 <img src="assets/hexstrike-logo.png" alt="HexStrike AI Logo" width="220" style="margin-bottom: 20px;"/>
 
-# HexStrike AI MCP Agents v6.0
+# HexStrike AI MCP Agents v7.0
 ### AI-Powered MCP Cybersecurity Automation Platform
 
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Security](https://img.shields.io/badge/Security-Penetration%20Testing-red.svg)](https://github.com/0x4m4/hexstrike-ai)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-purple.svg)](https://github.com/0x4m4/hexstrike-ai)
-[![Version](https://img.shields.io/badge/Version-6.0.0-orange.svg)](https://github.com/0x4m4/hexstrike-ai/releases)
-[![Tools](https://img.shields.io/badge/Security%20Tools-150%2B-brightgreen.svg)](https://github.com/0x4m4/hexstrike-ai)
-[![Agents](https://img.shields.io/badge/AI%20Agents-12%2B-purple.svg)](https://github.com/0x4m4/hexstrike-ai)
+[![Version](https://img.shields.io/badge/Version-7.0.0-orange.svg)](https://github.com/0x4m4/hexstrike-ai/releases)
+[![Tools](https://img.shields.io/badge/Security%20Tools-170%2B-brightgreen.svg)](https://github.com/0x4m4/hexstrike-ai)
+[![Agents](https://img.shields.io/badge/AI%20Agents-14%2B-purple.svg)](https://github.com/0x4m4/hexstrike-ai)
+[![Web3](https://img.shields.io/badge/Web3-Bug%20Bounty-blueviolet.svg)](https://github.com/0x4m4/hexstrike-ai)
 [![Stars](https://img.shields.io/github/stars/0x4m4/hexstrike-ai?style=social)](https://github.com/0x4m4/hexstrike-ai)
 
-**Advanced AI-powered penetration testing MCP framework with 150+ security tools and 12+ autonomous AI agents**
+**Advanced AI-powered penetration testing MCP framework with 170+ security tools, 14+ autonomous AI agents, and a dedicated Web3 / blockchain bug bounty module**
 
-[📋 What's New](#whats-new-in-v60) • [🏗️ Architecture](#architecture-overview) • [🚀 Installation](#installation) • [🛠️ Features](#features) • [🤖 AI Agents](#ai-agents) • [📡 API Reference](#api-reference)
+[📋 What's New](#hexstrike-ai-v70---now-available) • [🏗️ Architecture](#architecture-overview) • [🚀 Installation](#installation) • [🛠️ Features](#features) • [⛓️ Web3 Module](#️-web3-bug-bounty-module-v70) • [🤖 AI Agents](#ai-agents) • [📡 API Reference](#api-reference)
 
 </div>
 
@@ -486,8 +487,137 @@ Configure VS Code settings in `.vscode/settings.json`:
 - **PerformanceMonitor** - System optimization
 - **ParameterOptimizer** - Context-aware optimization
 - **GracefulDegradation** - Fault-tolerant operation
+- **Web3AuditAdvisor** *(v7.0)* - Smart-contract vulnerability advisory with PoC guidance
+- **Web3ScopeAnalyzer** *(v7.0)* - Bug bounty scope analysis and attack-plan generation
 
-### Advanced Features
+---
+
+## ⛓️ Web3 Bug Bounty Module (v7.0)
+
+HexStrike AI v7.0 adds a **comprehensive Web3 / blockchain security module** specifically designed for smart-contract bug bounty hunting on platforms such as Immunefi, Code4rena, Sherlock, and Cantina.
+
+### Smart-Contract Analysis Tools
+
+| Tool | MCP Function | Description |
+|------|-------------|-------------|
+| **Slither** | `slither_analyze` | Gold-standard Solidity static analyzer – 100+ detectors |
+| **Mythril** | `mythril_analyze` | EVM symbolic execution – integer overflow, reentrancy, unsafe calls |
+| **Manticore** | `manticore_analyze` | Symbolic execution with test-case generation |
+| **Echidna** | `echidna_fuzz` | Property-based fuzzer – break invariants with random txs |
+| **Foundry forge** | `foundry_forge_run` | Lightning-fast test/fuzz/coverage with mainnet fork support |
+| **Foundry cast** | `cast_command` | Swiss Army knife for on-chain interaction (storage, trace, decode) |
+| **Heimdall** | `heimdall_decompile` | EVM decompiler/CFG – analyze unverified contracts |
+| **solhint** | `solidity_lint` | Solidity style guide + security linter |
+| **Etherscan Recon** | `etherscan_recon` | Fetch verified source, ABI, tx history from block explorers |
+| **RPC Scanner** | `rpc_scanner` | Probe JSON-RPC endpoints for dangerous exposed methods |
+
+### Web3 Workflow Tools
+
+| Workflow | MCP Function | Description |
+|----------|-------------|-------------|
+| **Smart Contract Audit** | `web3_smart_contract_audit` | Full pipeline: Slither → Mythril → solhint → Echidna → 4naly3er |
+| **DeFi Assessment** | `web3_defi_security_assessment` | DeFi-specific: oracle, flash loan, reentrancy, proxy, MEV |
+| **Reentrancy Check** | `web3_reentrancy_check` | All reentrancy variants (eth, no-eth, benign, read-only) |
+| **Access Control** | `web3_access_control_check` | Privilege escalation and auth bypass detection |
+| **Flash Loan Analysis** | `web3_flash_loan_analysis` | Flash loan + fork simulation |
+| **Oracle Manipulation** | `web3_oracle_manipulation_check` | Spot-price oracle and TWAP validation |
+| **Proxy Analysis** | `web3_proxy_analysis` | EIP-1967/UUPS/Transparent/Beacon proxy inspection |
+| **MEV Analysis** | `web3_mev_analysis` | Sandwich, frontrun, JIT liquidity exposure |
+| **Token Analysis** | `web3_token_analysis` | ERC-20/721/1155 implementation security |
+| **Transaction Trace** | `web3_transaction_trace` | Full call-stack trace via `cast run` |
+| **Bug Bounty Recon** | `web3_bug_bounty_recon` | All-in-one recon: source fetch → decompile → RPC scan → lint |
+
+### AI Agents for Web3
+
+| Agent | MCP Function | Description |
+|-------|-------------|-------------|
+| **Audit Advisor** | `web3_audit_advisor` | Step-by-step guidance for 15+ vulnerability types with PoC templates |
+| **Scope Analyzer** | `web3_scope_analyzer` | Classify targets, prioritize checks, generate attack plan |
+
+### Supported Vulnerability Classes
+
+<details>
+<summary><b>Click to expand all 20+ supported Web3 vulnerability types</b></summary>
+
+- **Reentrancy** (eth, no-eth, cross-function, read-only)
+- **Flash Loan Attacks** (price manipulation, oracle abuse)
+- **Price Oracle Manipulation** (spot price, TWAP staleness, circuit breakers)
+- **Access Control** (missing modifiers, tx.origin, unprotected upgrades)
+- **Proxy/Upgrade Vulnerabilities** (storage collision, uninitialised impl, admin takeover)
+- **Integer Overflow/Underflow** (pre-0.8.x unchecked arithmetic)
+- **Front-Running / MEV** (sandwich, backrun, JIT liquidity)
+- **Signature Replay** (missing nonce, missing chainId, cross-chain replay)
+- **Read-Only Reentrancy** (cross-contract price manipulation via callbacks)
+- **Donation Attack / First-Deposit Attack** (share price inflation)
+- **Governance Attacks** (flash loan voting, timelock bypass)
+- **Cross-Chain Bridge Vulnerabilities** (message validation, replay)
+- **Token Vulnerabilities** (fee-on-transfer, rebasing, locked ETH)
+- **Unchecked Return Values** (low-level call failures ignored)
+- **Griefing Attacks** (DoS, gas exhaustion)
+- **Self-Destruct Abuse** (forced ETH send)
+- **Delegatecall Vulnerabilities** (arbitrary code execution)
+- **Business Logic Flaws** (DeFi-specific invariant violations)
+
+</details>
+
+### Quick Start – Web3 Bug Bounty
+
+```python
+# 1. Recon a deployed contract
+web3_bug_bounty_recon(
+    contract_address="0xABCD...",
+    rpc_url="https://mainnet.infura.io/v3/YOUR_KEY",
+    etherscan_api_key="YOUR_ETHERSCAN_KEY",
+    network="mainnet"
+)
+
+# 2. Full audit on local source
+web3_smart_contract_audit(
+    project_path="/path/to/foundry-project",
+    fork_url="https://mainnet.infura.io/v3/YOUR_KEY"
+)
+
+# 3. DeFi-specific assessment (DEX/lending/bridge)
+web3_defi_security_assessment(
+    project_path="/path/to/protocol",
+    protocol_type="dex",
+    rpc_url="https://mainnet.infura.io/v3/YOUR_KEY"
+)
+
+# 4. Get step-by-step guidance for a vulnerability type
+web3_audit_advisor(vulnerability_type="flash_loan")
+
+# 5. Analyze bug bounty scope and get prioritized attack plan
+web3_scope_analyzer(
+    scope_urls="0xDEX...,0xLending...,0xBridge...",
+    bounty_platform="immunefi"
+)
+```
+
+### Web3 Tool Installation
+
+```bash
+# Python packages (bundled in requirements.txt)
+pip install slither-analyzer mythril web3 eth-abi eth-utils eth-account
+
+# Foundry (forge + cast + anvil)
+curl -L https://foundry.paradigm.xyz | bash && foundryup
+
+# Echidna (binary release)
+# Download from https://github.com/crytic/echidna/releases
+
+# Heimdall (EVM decompiler – requires Rust)
+cargo install heimdall-rs
+
+# Solidity linter
+npm install -g solhint
+
+# 4naly3er automated report
+npm install -g 4naly3er
+
+# Solc compiler manager
+pip install solc-select && solc-select install 0.8.20
+```
 
 - **Smart Caching System** - Intelligent result caching with LRU eviction
 - **Real-time Process Management** - Live command control and monitoring
@@ -583,10 +713,20 @@ AI Agent: "Thank you for clarifying ownership and intent. To proceed with a pene
 
 ---
 
-## HexStrike AI v7.0 - Release Coming Soon!
+## HexStrike AI v7.0 - Now Available!
 
 ### Key Improvements & New Features
 
+- **⛓️ Web3 Bug Bounty Module** - 20+ tools and workflows for smart-contract security (Slither, Mythril, Echidna, Foundry, Heimdall, Manticore)
+- **🤖 Web3 AI Agents** - `web3_audit_advisor` and `web3_scope_analyzer` for guided vulnerability hunting
+- **🔬 DeFi Security Assessment** - Dedicated workflow for DEX/lending/bridge/vault protocol analysis
+- **⚡ Flash Loan & Oracle Analysis** - Automated detection of price manipulation attack vectors
+- **🔮 MEV Exposure Analysis** - Sandwich, frontrunning, JIT liquidity identification
+- **🧩 Proxy Pattern Analysis** - EIP-1967/UUPS/Transparent/Beacon upgrade vulnerability detection
+- **🔭 Etherscan Recon** - Multi-network block explorer API integration for source/ABI retrieval
+- **🔌 RPC Security Scanner** - Detect exposed dangerous JSON-RPC methods on EVM nodes
+- **🐛 Transaction Tracer** - Full call-stack traces via Foundry cast run
+- **📋 4naly3er Integration** - Automated gas and security report generation
 - **Streamlined Installation Process** - One-command setup with automated dependency management
 - **Docker Container Support** - Containerized deployment for consistent environments
 - **250+ Specialized AI Agents/Tools** - Expanded from 150+ to 250+ autonomous security agents
