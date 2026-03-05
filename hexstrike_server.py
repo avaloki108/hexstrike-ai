@@ -17703,8 +17703,6 @@ def web3_smart_contract_audit():
         contract_file = params.get("contract_file", "")
         contract_name = params.get("contract_name", "")
         fork_url = params.get("fork_url", "")
-        etherscan_api_key = params.get("etherscan_api_key", "")
-        scope = params.get("scope", [])
 
         if not project_path and not contract_file:
             return jsonify({"error": "project_path or contract_file is required"}), 400
