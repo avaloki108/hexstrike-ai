@@ -18199,13 +18199,8 @@ def web3_bug_bounty_recon():
             heimdall_result = execute_command(heimdall_cmd)
             recon["phases"].append({"phase": "heimdall_decompile", "result": heimdall_result})
 
-            rpc_scan_url = f"http://127.0.0.1:{API_PORT}/api/tools/rpc-scanner"
-            # inline RPC scan
-            rpc_result = execute_command(
-                f"curl -s -X POST {rpc_scan_url} "
-                f"-H 'Content-Type: application/json' "
-                f"-d '{{\"rpc_url\": \"{rpc_url}\"}}'"
-            )
+            # Inline RPC scan without HTTP self-call
+            rpc_result = rpc_scanner(rpc_url=rpc_url)
             recon["phases"].append({"phase": "rpc_endpoint_scan", "result": rpc_result})
 
         # Slither on local project
