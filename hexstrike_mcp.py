@@ -5722,7 +5722,7 @@ def setup_mcp_server(hexstrike_client: HexStrikeClient) -> FastMCP:
         address: str,
         api_key: str = "",
         network: str = "mainnet",
-        action: str = "getsourcecode"
+        action: str = "getabi"
     ) -> Dict[str, Any]:
         """
         Perform on-chain reconnaissance using the Etherscan/block-explorer API.
