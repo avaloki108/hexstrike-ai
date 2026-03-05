@@ -17808,10 +17808,22 @@ def web3_defi_security_assessment():
             storage_result = execute_command(cast_storage_cmd)
             assessment["phases"].append({"phase": "storage_layout_inspection", "result": storage_result})
 
-            # Fetch source via Etherscan if API key provided
+            # Fetch source via appropriate block explorer if API key provided
             if etherscan_api_key:
+                # Default to Ethereum mainnet Etherscan, but adjust based on rpc_url when possible
+                explorer_api_base = "https://api.etherscan.io/api"
+                lower_rpc_url = rpc_url.lower()
+                if "polygon" in lower_rpc_url:
+                    explorer_api_base = "https://api.polygonscan.com/api"
+                elif "bsc" in lower_rpc_url or "binance" in lower_rpc_url:
+                    explorer_api_base = "https://api.bscscan.com/api"
+                elif "arbitrum" in lower_rpc_url:
+                    explorer_api_base = "https://api.arbiscan.io/api"
+                elif "optimism" in lower_rpc_url or "opt-mainnet" in lower_rpc_url:
+                    explorer_api_base = "https://api-optimistic.etherscan.io/api"
+
                 etherscan_url = (
-                    f"https://api.etherscan.io/api?module=contract"
+                    f"{explorer_api_base}?module=contract"
                     f"&action=getsourcecode&address={contract_address}"
                     f"&apikey={etherscan_api_key}"
                 )
