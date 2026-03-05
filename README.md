@@ -531,7 +531,7 @@ HexStrike AI v7.0 adds a **comprehensive Web3 / blockchain security module** spe
 
 | Agent | MCP Function | Description |
 |-------|-------------|-------------|
-| **Audit Advisor** | `web3_audit_advisor` | Step-by-step guidance for 15+ vulnerability types with PoC templates |
+| **Audit Advisor** | `web3_audit_advisor` | Step-by-step guidance for 9 vulnerability types with PoC templates |
 | **Scope Analyzer** | `web3_scope_analyzer` | Classify targets, prioritize checks, generate attack plan |
 
 ### Supported Vulnerability Classes

@@ -22,6 +22,7 @@ import argparse
 import json
 import logging
 import os
+import shlex
 import subprocess
 import sys
 import traceback
@@ -17399,7 +17400,7 @@ def foundry_forge():
     try:
         params = request.json or {}
         project_path = params.get("project_path", ".")
-        action = params.get("action", "test")   # test, build, fuzz, coverage
+        action = params.get("action", "test")   # test, build, coverage, snapshot, fmt
         test_filter = params.get("test_filter", "")
         verbosity = params.get("verbosity", "-vvv")
         fork_url = params.get("fork_url", "")
@@ -17595,7 +17596,10 @@ def etherscan_recon():
             "base": "https://api.basescan.org/api",
         }
         base_url = base_urls.get(network, base_urls["mainnet"])
-        url = f"{base_url}?module=contract&action={action}&address={address}"
+        # account-module actions require module=account; everything else uses module=contract
+        account_actions = {"txlist", "txlistinternal", "tokentx", "tokennfttx", "getminedblocks", "balance", "balancemulti"}
+        module = "account" if action in account_actions else "contract"
+        url = f"{base_url}?module={module}&action={action}&address={address}"
         if api_key:
             url += f"&apikey={api_key}"
 
@@ -18046,8 +18050,14 @@ def web3_mev_analysis():
             analysis["phases"].append({"phase": "slither_mev_patterns", "result": slither_result})
 
         if contract_address and rpc_url:
-            # Fetch recent transactions
-            cast_cmd = f"cast logs --address {contract_address} --rpc-url {rpc_url} --from-block latest"
+            # Fetch recent transactions within block_range blocks from latest
+            quoted_rpc = shlex.quote(rpc_url)
+            cast_cmd = (
+                f"LATEST=$(cast block latest --field number --rpc-url {quoted_rpc} 2>/dev/null); "
+                f"FROM=$(( LATEST - {int(block_range)} )); "
+                f"[ \"$FROM\" -lt 0 ] && FROM=0; "
+                f"cast logs --address {shlex.quote(contract_address)} --rpc-url {quoted_rpc} --from-block $FROM"
+            )
             cast_result = execute_command(cast_cmd)
             analysis["phases"].append({"phase": "recent_event_logs", "result": cast_result})
 
@@ -18140,6 +18150,15 @@ def web3_transaction_trace():
         run_result = execute_command(run_cmd)
         analysis["phases"].append({"phase": "trace", "result": run_result})
 
+        # Decode transaction input using 4byte selectors when decode_abi is requested
+        if decode_abi:
+            decode_cmd = (
+                f"INPUT=$(cast tx {shlex.quote(tx_hash)} input --rpc-url {shlex.quote(rpc_url)} 2>/dev/null); "
+                f"cast 4byte-decode $INPUT 2>/dev/null || echo $INPUT"
+            )
+            decode_result = execute_command(decode_cmd)
+            analysis["phases"].append({"phase": "input_decode", "result": decode_result})
+
         analysis["success"] = True
         logger.info(f"🔍 Transaction trace completed for {tx_hash}")
         return jsonify(analysis)
@@ -18196,8 +18215,30 @@ def web3_bug_bounty_recon():
             heimdall_result = execute_command(heimdall_cmd)
             recon["phases"].append({"phase": "heimdall_decompile", "result": heimdall_result})
 
-            # Inline RPC scan without HTTP self-call
-            rpc_result = rpc_scanner(rpc_url=rpc_url)
+            # Inline RPC scan: probe for exposed dangerous JSON-RPC methods
+            _rpc_dangerous_methods = [
+                "eth_accounts", "eth_sign", "personal_sign", "personal_unlockAccount",
+                "eth_sendTransaction", "debug_traceTransaction", "debug_traceCall",
+                "admin_nodeInfo", "admin_peers", "miner_start", "miner_stop",
+                "txpool_content", "txpool_inspect"
+            ]
+            _rpc_script_lines = [
+                "import json, urllib.request",
+                f"rpc = {repr(rpc_url)}",
+                "results = {}",
+                "for method in " + repr(_rpc_dangerous_methods) + ":",
+                "    try:",
+                "        payload = json.dumps({'jsonrpc':'2.0','method':method,'params':[],'id':1}).encode()",
+                "        req = urllib.request.Request(rpc, data=payload, headers={'Content-Type':'application/json'})",
+                "        with urllib.request.urlopen(req, timeout=5) as r:",
+                "            resp = json.loads(r.read())",
+                "            results[method] = {'exposed': 'error' not in resp, 'response': resp}",
+                "    except Exception as e:",
+                "        results[method] = {'exposed': False, 'error': str(e)}",
+                "print(json.dumps({'rpc_url': rpc, 'exposed_methods': {k:v for k,v in results.items() if v.get('exposed')}, 'all_results': results}))",
+            ]
+            _rpc_scan_script = "\n".join(_rpc_script_lines)
+            rpc_result = execute_command(f"python3 -c {repr(_rpc_scan_script)}")
             recon["phases"].append({"phase": "rpc_endpoint_scan", "result": rpc_result})
 
         # Slither on local project
