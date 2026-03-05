@@ -5411,6 +5411,1159 @@ def setup_mcp_server(hexstrike_client: HexStrikeClient) -> FastMCP:
 
         return result
 
+    # ============================================================================
+    # WEB3 / BLOCKCHAIN SECURITY TOOLS  (v7.0 – Web3 Bug Bounty Module)
+    # ============================================================================
+
+    @mcp.tool()
+    def slither_analyze(
+        target: str,
+        detector: str = "",
+        exclude_detectors: str = "",
+        output_format: str = "text",
+        additional_args: str = ""
+    ) -> Dict[str, Any]:
+        """
+        Run Slither static analyzer against a Solidity contract or project directory.
+
+        Slither is the gold-standard static analysis framework for Solidity.  It
+        detects 100+ vulnerability classes (reentrancy, access control, integer
+        issues, etc.) without requiring contract compilation in most cases.
+
+        Args:
+            target: Path to .sol file, project directory, or deployed address
+            detector: Comma-separated list of detectors to run (e.g. reentrancy-eth,tx-origin)
+            exclude_detectors: Comma-separated detectors to suppress
+            output_format: Output format (text, json, markdown, sarif)
+            additional_args: Extra slither CLI flags
+
+        Returns:
+            Slither analysis results with detected vulnerabilities
+        """
+        data = {
+            "target": target,
+            "detector": detector,
+            "exclude_detectors": exclude_detectors,
+            "output_format": output_format,
+            "additional_args": additional_args
+        }
+        logger.info(f"{HexStrikeColors.FIRE_RED}🔬 Starting Slither analysis: {target}{HexStrikeColors.RESET}")
+        result = hexstrike_client.safe_post("api/tools/slither", data)
+        if result.get("success"):
+            logger.info(f"{HexStrikeColors.SUCCESS}✅ Slither analysis completed for {target}{HexStrikeColors.RESET}")
+        else:
+            logger.error(f"{HexStrikeColors.ERROR}❌ Slither analysis failed for {target}{HexStrikeColors.RESET}")
+        return result
+
+    @mcp.tool()
+    def mythril_analyze(
+        target: str,
+        mode: str = "a",
+        execution_timeout: int = 300,
+        max_depth: int = 22,
+        solc_version: str = "",
+        rpc: str = "",
+        additional_args: str = ""
+    ) -> Dict[str, Any]:
+        """
+        Run Mythril symbolic execution engine on a Solidity file or deployed contract.
+
+        Mythril uses symbolic execution, taint analysis, and control-flow checks to
+        detect integer overflows, unchecked calls, reentrancy, and more.
+
+        Args:
+            target: Path to .sol file, bytecode file, or 0x contract address
+            mode: Analysis mode – a=analyze, d=disassemble, c=compile
+            execution_timeout: Maximum seconds for symbolic execution (default 300)
+            max_depth: Maximum recursion depth (default 22)
+            solc_version: Solidity compiler version to use (e.g. 0.8.20)
+            rpc: JSON-RPC endpoint for on-chain analysis (e.g. https://mainnet.infura.io/v3/KEY)
+            additional_args: Extra myth CLI flags
+
+        Returns:
+            Mythril vulnerability report
+        """
+        data = {
+            "target": target,
+            "mode": mode,
+            "execution_timeout": execution_timeout,
+            "max_depth": max_depth,
+            "solc_version": solc_version,
+            "rpc": rpc,
+            "additional_args": additional_args
+        }
+        logger.info(f"{HexStrikeColors.BLOOD_RED}🧿 Starting Mythril analysis: {target}{HexStrikeColors.RESET}")
+        result = hexstrike_client.safe_post("api/tools/mythril", data)
+        if result.get("success"):
+            logger.info(f"{HexStrikeColors.SUCCESS}✅ Mythril completed for {target}{HexStrikeColors.RESET}")
+        else:
+            logger.error(f"{HexStrikeColors.ERROR}❌ Mythril failed for {target}{HexStrikeColors.RESET}")
+        return result
+
+    @mcp.tool()
+    def manticore_analyze(
+        target: str,
+        testcase: bool = False,
+        workspace: str = "/tmp/manticore_output",
+        timeout: int = 300,
+        additional_args: str = ""
+    ) -> Dict[str, Any]:
+        """
+        Run Manticore symbolic execution against an EVM binary or Solidity file.
+
+        Manticore generates test cases that trigger each unique code path and
+        detects assertion violations, integer overflows, and dangerous instructions.
+
+        Args:
+            target: Path to .sol file or EVM bytecode
+            testcase: Generate test case files for each finding
+            workspace: Output directory for results
+            timeout: Analysis timeout in seconds
+            additional_args: Extra manticore CLI flags
+
+        Returns:
+            Manticore analysis results and generated test cases
+        """
+        data = {
+            "target": target,
+            "testcase": testcase,
+            "workspace": workspace,
+            "timeout": timeout,
+            "additional_args": additional_args
+        }
+        logger.info(f"{HexStrikeColors.CRIMSON}🦾 Starting Manticore analysis: {target}{HexStrikeColors.RESET}")
+        result = hexstrike_client.safe_post("api/tools/manticore", data)
+        if result.get("success"):
+            logger.info(f"{HexStrikeColors.SUCCESS}✅ Manticore completed for {target}{HexStrikeColors.RESET}")
+        else:
+            logger.error(f"{HexStrikeColors.ERROR}❌ Manticore failed for {target}{HexStrikeColors.RESET}")
+        return result
+
+    @mcp.tool()
+    def echidna_fuzz(
+        contract_path: str,
+        contract_name: str = "",
+        config: str = "",
+        test_limit: int = 50000,
+        corpus_dir: str = "",
+        additional_args: str = ""
+    ) -> Dict[str, Any]:
+        """
+        Run Echidna property-based fuzzer against a Solidity contract.
+
+        Echidna generates random transactions to break user-defined invariants
+        (functions prefixed with echidna_) and is invaluable for DeFi protocol
+        bug hunting.
+
+        Args:
+            contract_path: Path to the Solidity file or project directory
+            contract_name: Name of the contract to fuzz (required for multi-contract files)
+            config: Path to echidna YAML config file
+            test_limit: Maximum number of fuzzing transactions (default 50000)
+            corpus_dir: Directory for saving/loading fuzzing corpus
+            additional_args: Extra echidna CLI flags
+
+        Returns:
+            Echidna fuzzing results with property violations
+        """
+        data = {
+            "contract_path": contract_path,
+            "contract_name": contract_name,
+            "config": config,
+            "test_limit": test_limit,
+            "corpus_dir": corpus_dir,
+            "additional_args": additional_args
+        }
+        logger.info(f"{HexStrikeColors.HACKER_RED}🦔 Starting Echidna fuzzing: {contract_path}{HexStrikeColors.RESET}")
+        result = hexstrike_client.safe_post("api/tools/echidna", data)
+        if result.get("success"):
+            logger.info(f"{HexStrikeColors.SUCCESS}✅ Echidna fuzzing completed for {contract_path}{HexStrikeColors.RESET}")
+        else:
+            logger.error(f"{HexStrikeColors.ERROR}❌ Echidna fuzzing failed for {contract_path}{HexStrikeColors.RESET}")
+        return result
+
+    @mcp.tool()
+    def foundry_forge_run(
+        project_path: str = ".",
+        action: str = "test",
+        test_filter: str = "",
+        verbosity: str = "-vvv",
+        fork_url: str = "",
+        fork_block: str = "",
+        fuzz_runs: int = 256,
+        additional_args: str = ""
+    ) -> Dict[str, Any]:
+        """
+        Run Foundry forge for smart contract testing, fuzzing, and coverage.
+
+        Foundry is the fastest smart-contract testing framework.  Fork-testing
+        against mainnet state is the most powerful way to prove real exploitability.
+
+        Args:
+            project_path: Path to the Foundry project (default: current directory)
+            action: forge sub-command – test, build, coverage, snapshot, fmt
+            test_filter: Regex filter for test function names (e.g. testReentrancy)
+            verbosity: Verbosity flags (-v to -vvvvv)
+            fork_url: JSON-RPC URL for fork testing (e.g. https://mainnet.infura.io/v3/KEY)
+            fork_block: Block number to fork at (leave blank for latest)
+            fuzz_runs: Number of fuzz runs per property test (default 256)
+            additional_args: Extra forge flags
+
+        Returns:
+            Forge test/build/coverage results
+        """
+        data = {
+            "project_path": project_path,
+            "action": action,
+            "test_filter": test_filter,
+            "verbosity": verbosity,
+            "fork_url": fork_url,
+            "fork_block": fork_block,
+            "fuzz_runs": fuzz_runs,
+            "additional_args": additional_args
+        }
+        logger.info(f"{HexStrikeColors.SCARLET}🔨 Starting Foundry forge {action}: {project_path}{HexStrikeColors.RESET}")
+        result = hexstrike_client.safe_post("api/tools/foundry-forge", data)
+        if result.get("success"):
+            logger.info(f"{HexStrikeColors.SUCCESS}✅ Forge {action} completed{HexStrikeColors.RESET}")
+        else:
+            logger.error(f"{HexStrikeColors.ERROR}❌ Forge {action} failed{HexStrikeColors.RESET}")
+        return result
+
+    @mcp.tool()
+    def cast_command(
+        subcommand: str,
+        rpc_url: str = "",
+        args: str = "",
+        additional_args: str = ""
+    ) -> Dict[str, Any]:
+        """
+        Execute Foundry cast commands for on-chain interaction and analysis.
+
+        cast is the Swiss Army knife for EVM interaction.  Use it to read storage
+        slots, decode calldata, send calls, trace transactions, and much more.
+
+        Common subcommands:
+          call <addr> <sig> [args]    – read-only call
+          storage <addr> <slot>       – read storage slot
+          code <addr>                 – get deployed bytecode
+          tx <hash>                   – get transaction details
+          receipt <hash>              – get receipt
+          run <hash>                  – trace transaction
+          4byte <selector>            – lookup function signature
+          abi-decode <sig> <data>     – decode calldata
+          logs --address <addr>       – fetch event logs
+
+        Args:
+            subcommand: cast sub-command and its positional arguments
+            rpc_url: JSON-RPC endpoint URL
+            args: Additional positional arguments for the sub-command
+            additional_args: Extra cast flags
+
+        Returns:
+            cast command output
+        """
+        data = {
+            "subcommand": subcommand,
+            "rpc_url": rpc_url,
+            "args": args,
+            "additional_args": additional_args
+        }
+        logger.info(f"{HexStrikeColors.RUBY}⛓️  Running cast {subcommand}{HexStrikeColors.RESET}")
+        result = hexstrike_client.safe_post("api/tools/cast", data)
+        if result.get("success"):
+            logger.info(f"{HexStrikeColors.SUCCESS}✅ cast {subcommand} completed{HexStrikeColors.RESET}")
+        else:
+            logger.error(f"{HexStrikeColors.ERROR}❌ cast {subcommand} failed{HexStrikeColors.RESET}")
+        return result
+
+    @mcp.tool()
+    def heimdall_decompile(
+        target: str,
+        subcommand: str = "decompile",
+        rpc_url: str = "",
+        output_dir: str = "/tmp/heimdall_output",
+        additional_args: str = ""
+    ) -> Dict[str, Any]:
+        """
+        Run Heimdall EVM decompiler/analyzer on bytecode or a deployed contract.
+
+        Heimdall can decompile EVM bytecode back to pseudo-Solidity, generate
+        control-flow graphs, and extract function selectors – essential when source
+        code is unavailable (e.g. unverified contracts).
+
+        Args:
+            target: Hex bytecode string or 0x contract address
+            subcommand: heimdall sub-command – decompile, disassemble, cfg, inspect
+            rpc_url: JSON-RPC endpoint for fetching on-chain bytecode
+            output_dir: Output directory for decompiled files
+            additional_args: Extra heimdall flags
+
+        Returns:
+            Heimdall decompilation results
+        """
+        data = {
+            "target": target,
+            "subcommand": subcommand,
+            "rpc_url": rpc_url,
+            "output_dir": output_dir,
+            "additional_args": additional_args
+        }
+        logger.info(f"{HexStrikeColors.BLOOD_RED}🪄  Starting Heimdall {subcommand}: {target}{HexStrikeColors.RESET}")
+        result = hexstrike_client.safe_post("api/tools/heimdall", data)
+        if result.get("success"):
+            logger.info(f"{HexStrikeColors.SUCCESS}✅ Heimdall {subcommand} completed{HexStrikeColors.RESET}")
+        else:
+            logger.error(f"{HexStrikeColors.ERROR}❌ Heimdall {subcommand} failed{HexStrikeColors.RESET}")
+        return result
+
+    @mcp.tool()
+    def etherscan_recon(
+        address: str,
+        api_key: str = "",
+        network: str = "mainnet",
+        action: str = "getabi"
+    ) -> Dict[str, Any]:
+        """
+        Perform on-chain reconnaissance using the Etherscan/block-explorer API.
+
+        Retrieves verified source code, ABI, creation code, transaction history,
+        token transfers, and internal transactions for any contract address.
+
+        Supported networks: mainnet, goerli, sepolia, polygon, bsc, arbitrum,
+                            optimism, avalanche, base
+
+        Common actions:
+          getsourcecode   – verified Solidity source + compiler settings
+          getabi          – contract ABI
+          txlist          – transaction list
+          txlistinternal  – internal transaction list
+          tokentx         – ERC-20 token transfers
+          tokennfttx      – ERC-721 NFT transfers
+
+        Args:
+            address: Target contract or EOA address (0x…)
+            api_key: Etherscan API key (free tier available)
+            network: Target network name
+            action: Etherscan API action
+
+        Returns:
+            Etherscan API response
+        """
+        data = {
+            "address": address,
+            "api_key": api_key,
+            "network": network,
+            "action": action
+        }
+        logger.info(f"{HexStrikeColors.NEON_BLUE}🔭 Running Etherscan recon ({action}) for {address} on {network}{HexStrikeColors.RESET}")
+        result = hexstrike_client.safe_post("api/tools/etherscan-recon", data)
+        if result.get("success"):
+            logger.info(f"{HexStrikeColors.SUCCESS}✅ Etherscan recon completed{HexStrikeColors.RESET}")
+        else:
+            logger.error(f"{HexStrikeColors.ERROR}❌ Etherscan recon failed{HexStrikeColors.RESET}")
+        return result
+
+    @mcp.tool()
+    def rpc_scanner(
+        rpc_url: str,
+        additional_args: str = ""
+    ) -> Dict[str, Any]:
+        """
+        Probe an Ethereum/EVM JSON-RPC endpoint for exposed dangerous methods.
+
+        Many nodes incorrectly expose administrative RPC methods (eth_sign,
+        personal_unlockAccount, debug_traceCall, admin_peers, etc.) that can
+        lead to fund theft or full node compromise.
+
+        Args:
+            rpc_url: Full JSON-RPC URL to probe (e.g. http://target:8545)
+            additional_args: Reserved for future use
+
+        Returns:
+            Dict of exposed/dangerous methods with responses
+        """
+        data = {
+            "rpc_url": rpc_url,
+            "additional_args": additional_args
+        }
+        logger.info(f"{HexStrikeColors.HACKER_RED}🔌 Scanning RPC endpoint: {rpc_url}{HexStrikeColors.RESET}")
+        result = hexstrike_client.safe_post("api/tools/rpc-scanner", data)
+        if result.get("success"):
+            exposed = result.get("stdout", "")
+            if "exposed" in exposed:
+                logger.warning(f"{HexStrikeColors.HIGHLIGHT_RED} Dangerous RPC methods exposed! {HexStrikeColors.RESET}")
+            logger.info(f"{HexStrikeColors.SUCCESS}✅ RPC scan completed for {rpc_url}{HexStrikeColors.RESET}")
+        else:
+            logger.error(f"{HexStrikeColors.ERROR}❌ RPC scan failed for {rpc_url}{HexStrikeColors.RESET}")
+        return result
+
+    @mcp.tool()
+    def solidity_lint(
+        target: str,
+        config: str = "",
+        rules: str = "",
+        additional_args: str = ""
+    ) -> Dict[str, Any]:
+        """
+        Run solhint linter on Solidity source files for style and security issues.
+
+        solhint enforces the Solidity Style Guide and detects common security
+        pitfalls such as avoid-call-value, no-inline-assembly, not-rely-on-time,
+        reentrancy guards, etc.
+
+        Args:
+            target: Path to .sol file or glob pattern (e.g. contracts/**/*.sol)
+            config: Path to .solhint.json config file
+            rules: Comma-separated rules to enable (overrides config)
+            additional_args: Extra solhint flags
+
+        Returns:
+            Linting results with rule violations
+        """
+        data = {
+            "target": target,
+            "config": config,
+            "rules": rules,
+            "additional_args": additional_args
+        }
+        logger.info(f"{HexStrikeColors.CYBER_ORANGE}📐 Starting solhint linting: {target}{HexStrikeColors.RESET}")
+        result = hexstrike_client.safe_post("api/tools/solidity-linter", data)
+        if result.get("success"):
+            logger.info(f"{HexStrikeColors.SUCCESS}✅ solhint completed for {target}{HexStrikeColors.RESET}")
+        else:
+            logger.error(f"{HexStrikeColors.ERROR}❌ solhint failed for {target}{HexStrikeColors.RESET}")
+        return result
+
+    # ── Web3 Workflow tools ──────────────────────────────────────────────────
+
+    @mcp.tool()
+    def web3_smart_contract_audit(
+        project_path: str = "",
+        contract_file: str = "",
+        contract_name: str = "",
+        fork_url: str = "",
+        etherscan_api_key: str = ""
+    ) -> Dict[str, Any]:
+        """
+        Full automated smart-contract audit pipeline.
+
+        Runs in sequence: Slither static analysis → solhint linting →
+        Mythril symbolic execution → Echidna fuzzing (if contract_name given) →
+        4naly3er automated report.
+
+        This is the recommended starting point for any smart-contract bug bounty.
+
+        Args:
+            project_path: Path to Foundry/Hardhat project root
+            contract_file: Path to a single .sol file (alternative to project_path)
+            contract_name: Contract name for Echidna fuzzing (optional)
+            fork_url: Mainnet fork URL for Mythril on-chain analysis
+            etherscan_api_key: Optional Etherscan key for source verification
+
+        Returns:
+            Consolidated audit report from all tools
+        """
+        data = {
+            "project_path": project_path,
+            "contract_file": contract_file,
+            "contract_name": contract_name,
+            "fork_url": fork_url,
+            "etherscan_api_key": etherscan_api_key
+        }
+        logger.info(f"{HexStrikeColors.CRITICAL} 🔒 Starting full smart-contract audit {HexStrikeColors.RESET}")
+        result = hexstrike_client.safe_post("api/web3/smart-contract-audit", data)
+        if result.get("success"):
+            phases = result.get("phases", [])
+            logger.info(f"{HexStrikeColors.SUCCESS}✅ Audit completed – {len(phases)} phases run{HexStrikeColors.RESET}")
+        else:
+            logger.error(f"{HexStrikeColors.ERROR}❌ Smart contract audit failed{HexStrikeColors.RESET}")
+        return result
+
+    @mcp.tool()
+    def web3_defi_security_assessment(
+        project_path: str = "",
+        contract_address: str = "",
+        rpc_url: str = "",
+        protocol_type: str = "generic",
+        etherscan_api_key: str = ""
+    ) -> Dict[str, Any]:
+        """
+        Comprehensive DeFi protocol security assessment.
+
+        Covers: price oracle manipulation, flash loan attack vectors, reentrancy,
+        access control weaknesses, MEV exposure, proxy upgrade risks, and
+        integer overflow/underflow.
+
+        Protocol types: dex, lending, bridge, yield, generic
+
+        Args:
+            project_path: Path to protocol source code
+            contract_address: Deployed contract address (for on-chain analysis)
+            rpc_url: JSON-RPC endpoint for on-chain interaction
+            protocol_type: Type of DeFi protocol (dex/lending/bridge/yield/generic)
+            etherscan_api_key: Etherscan API key for source retrieval
+
+        Returns:
+            DeFi security assessment report
+        """
+        data = {
+            "project_path": project_path,
+            "contract_address": contract_address,
+            "rpc_url": rpc_url,
+            "protocol_type": protocol_type,
+            "etherscan_api_key": etherscan_api_key
+        }
+        logger.info(f"{HexStrikeColors.VULN_CRITICAL} 💰 Starting DeFi security assessment {HexStrikeColors.RESET}")
+        result = hexstrike_client.safe_post("api/web3/defi-security-assessment", data)
+        if result.get("success"):
+            cats = result.get("vulnerability_categories", [])
+            logger.info(f"{HexStrikeColors.SUCCESS}✅ DeFi assessment completed – {len(cats)} categories checked{HexStrikeColors.RESET}")
+        else:
+            logger.error(f"{HexStrikeColors.ERROR}❌ DeFi assessment failed{HexStrikeColors.RESET}")
+        return result
+
+    @mcp.tool()
+    def web3_reentrancy_check(target: str) -> Dict[str, Any]:
+        """
+        Check smart contracts for reentrancy vulnerabilities using Slither.
+
+        Detects all reentrancy variants: eth, no-eth, benign, unlimited-gas,
+        and event-order reentrancy.
+
+        Args:
+            target: Path to .sol file, project directory, or contract address
+
+        Returns:
+            Reentrancy vulnerability report
+        """
+        data = {"target": target}
+        logger.info(f"{HexStrikeColors.FIRE_RED}🔁 Checking reentrancy: {target}{HexStrikeColors.RESET}")
+        result = hexstrike_client.safe_post("api/web3/reentrancy-check", data)
+        if result.get("success"):
+            logger.info(f"{HexStrikeColors.SUCCESS}✅ Reentrancy check completed{HexStrikeColors.RESET}")
+        else:
+            logger.error(f"{HexStrikeColors.ERROR}❌ Reentrancy check failed{HexStrikeColors.RESET}")
+        return result
+
+    @mcp.tool()
+    def web3_access_control_check(target: str) -> Dict[str, Any]:
+        """
+        Check smart contracts for access control vulnerabilities.
+
+        Detects: arbitrary ETH send, controlled delegatecall, missing zero-address
+        checks, tx.origin authentication, self-destruct exposure, and unprotected
+        upgrade functions.
+
+        Args:
+            target: Path to .sol file, project directory, or contract address
+
+        Returns:
+            Access control vulnerability report
+        """
+        data = {"target": target}
+        logger.info(f"{HexStrikeColors.BLOOD_RED}🔐 Checking access control: {target}{HexStrikeColors.RESET}")
+        result = hexstrike_client.safe_post("api/web3/access-control-check", data)
+        if result.get("success"):
+            logger.info(f"{HexStrikeColors.SUCCESS}✅ Access control check completed{HexStrikeColors.RESET}")
+        else:
+            logger.error(f"{HexStrikeColors.ERROR}❌ Access control check failed{HexStrikeColors.RESET}")
+        return result
+
+    @mcp.tool()
+    def web3_flash_loan_analysis(
+        target: str,
+        rpc_url: str = "",
+        fork_block: str = ""
+    ) -> Dict[str, Any]:
+        """
+        Analyze smart contracts for flash loan attack vectors.
+
+        Checks for price manipulation via token transfers, unchecked token
+        transfers, arbitrary ERC-20 send patterns, and validates Foundry
+        fork-based flash loan PoC tests when an RPC URL is provided.
+
+        Args:
+            target: Path to .sol file or project directory
+            rpc_url: Mainnet fork URL for live simulation
+            fork_block: Block number to pin the fork (optional)
+
+        Returns:
+            Flash loan vulnerability analysis report
+        """
+        data = {
+            "target": target,
+            "rpc_url": rpc_url,
+            "fork_block": fork_block
+        }
+        logger.info(f"{HexStrikeColors.CRIMSON}💸 Analyzing flash loan attack vectors: {target}{HexStrikeColors.RESET}")
+        result = hexstrike_client.safe_post("api/web3/flash-loan-analysis", data)
+        if result.get("success"):
+            logger.info(f"{HexStrikeColors.SUCCESS}✅ Flash loan analysis completed{HexStrikeColors.RESET}")
+        else:
+            logger.error(f"{HexStrikeColors.ERROR}❌ Flash loan analysis failed{HexStrikeColors.RESET}")
+        return result
+
+    @mcp.tool()
+    def web3_oracle_manipulation_check(target: str) -> Dict[str, Any]:
+        """
+        Check for price oracle manipulation vulnerabilities.
+
+        Detects spot-price oracle reliance, price manipulation via token transfers,
+        and tainted external call patterns that can be exploited for oracle attacks.
+
+        Args:
+            target: Path to .sol file or project directory
+
+        Returns:
+            Oracle manipulation vulnerability report
+        """
+        data = {"target": target}
+        logger.info(f"{HexStrikeColors.DARK_RED}🔮 Checking oracle manipulation: {target}{HexStrikeColors.RESET}")
+        result = hexstrike_client.safe_post("api/web3/oracle-manipulation-check", data)
+        if result.get("success"):
+            logger.info(f"{HexStrikeColors.SUCCESS}✅ Oracle check completed{HexStrikeColors.RESET}")
+        else:
+            logger.error(f"{HexStrikeColors.ERROR}❌ Oracle check failed{HexStrikeColors.RESET}")
+        return result
+
+    @mcp.tool()
+    def web3_proxy_analysis(
+        target: str = "",
+        contract_address: str = "",
+        rpc_url: str = ""
+    ) -> Dict[str, Any]:
+        """
+        Analyze proxy/upgradeable contract patterns for security issues.
+
+        Checks EIP-1967 implementation and admin storage slots, UUPS/Transparent/
+        Beacon proxy patterns, storage collision risks, uninitialized state,
+        and unprotected upgrade functions.
+
+        Args:
+            target: Path to .sol file or project directory (for static analysis)
+            contract_address: Deployed proxy address (for on-chain slot inspection)
+            rpc_url: JSON-RPC endpoint for on-chain analysis
+
+        Returns:
+            Proxy pattern security analysis report
+        """
+        data = {
+            "target": target,
+            "contract_address": contract_address,
+            "rpc_url": rpc_url
+        }
+        logger.info(f"{HexStrikeColors.RUBY}🧩 Analyzing proxy patterns: {target or contract_address}{HexStrikeColors.RESET}")
+        result = hexstrike_client.safe_post("api/web3/proxy-analysis", data)
+        if result.get("success"):
+            logger.info(f"{HexStrikeColors.SUCCESS}✅ Proxy analysis completed{HexStrikeColors.RESET}")
+        else:
+            logger.error(f"{HexStrikeColors.ERROR}❌ Proxy analysis failed{HexStrikeColors.RESET}")
+        return result
+
+    @mcp.tool()
+    def web3_mev_analysis(
+        target: str = "",
+        contract_address: str = "",
+        rpc_url: str = "",
+        block_range: int = 100
+    ) -> Dict[str, Any]:
+        """
+        Analyze MEV (Maximal Extractable Value) exposure in smart contracts.
+
+        Identifies sandwich attack vectors, frontrunning susceptibility, backrunning
+        opportunities, arbitrage paths, liquidation MEV, and JIT liquidity risks.
+
+        Args:
+            target: Path to .sol file or project (for static analysis)
+            contract_address: Deployed contract address (for on-chain log analysis)
+            rpc_url: JSON-RPC endpoint for fetching on-chain data
+            block_range: Number of recent blocks to analyze for MEV patterns
+
+        Returns:
+            MEV exposure analysis report
+        """
+        data = {
+            "target": target,
+            "contract_address": contract_address,
+            "rpc_url": rpc_url,
+            "block_range": block_range
+        }
+        logger.info(f"{HexStrikeColors.SCARLET}⚡ Analyzing MEV exposure: {target or contract_address}{HexStrikeColors.RESET}")
+        result = hexstrike_client.safe_post("api/web3/mev-analysis", data)
+        if result.get("success"):
+            logger.info(f"{HexStrikeColors.SUCCESS}✅ MEV analysis completed{HexStrikeColors.RESET}")
+        else:
+            logger.error(f"{HexStrikeColors.ERROR}❌ MEV analysis failed{HexStrikeColors.RESET}")
+        return result
+
+    @mcp.tool()
+    def web3_token_analysis(
+        target: str = "",
+        contract_address: str = "",
+        rpc_url: str = "",
+        token_standard: str = "ERC20"
+    ) -> Dict[str, Any]:
+        """
+        Analyze ERC-20/721/1155 token implementations for common vulnerabilities.
+
+        Checks for: locked ether, unchecked transfers, arbitrary ERC-20 send,
+        fee-on-transfer token issues, rebasing token handling, interface compliance,
+        and suspicious owner/minter privileges.
+
+        Args:
+            target: Path to .sol file or project directory
+            contract_address: Deployed token address (for on-chain queries)
+            rpc_url: JSON-RPC endpoint for on-chain analysis
+            token_standard: Token standard to check (ERC20, ERC721, ERC1155)
+
+        Returns:
+            Token security analysis report
+        """
+        data = {
+            "target": target,
+            "contract_address": contract_address,
+            "rpc_url": rpc_url,
+            "token_standard": token_standard
+        }
+        logger.info(f"{HexStrikeColors.BURGUNDY}🪙 Analyzing {token_standard} token: {target or contract_address}{HexStrikeColors.RESET}")
+        result = hexstrike_client.safe_post("api/web3/token-analysis", data)
+        if result.get("success"):
+            logger.info(f"{HexStrikeColors.SUCCESS}✅ Token analysis completed{HexStrikeColors.RESET}")
+        else:
+            logger.error(f"{HexStrikeColors.ERROR}❌ Token analysis failed{HexStrikeColors.RESET}")
+        return result
+
+    @mcp.tool()
+    def web3_transaction_trace(
+        tx_hash: str,
+        rpc_url: str,
+        decode_abi: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Trace and decode a transaction to understand its full execution path.
+
+        Uses Foundry cast run to produce a full call stack trace including
+        internal calls, storage changes, emitted events, and gas usage.
+
+        Args:
+            tx_hash: Transaction hash to trace (0x…)
+            rpc_url: JSON-RPC endpoint that the transaction was sent to
+            decode_abi: Attempt to decode ABI-encoded calldata in the trace
+
+        Returns:
+            Full transaction trace with receipt and call stack
+        """
+        data = {
+            "tx_hash": tx_hash,
+            "rpc_url": rpc_url,
+            "decode_abi": decode_abi
+        }
+        logger.info(f"{HexStrikeColors.NEON_BLUE}🔍 Tracing transaction: {tx_hash}{HexStrikeColors.RESET}")
+        result = hexstrike_client.safe_post("api/web3/transaction-trace", data)
+        if result.get("success"):
+            logger.info(f"{HexStrikeColors.SUCCESS}✅ Transaction trace completed{HexStrikeColors.RESET}")
+        else:
+            logger.error(f"{HexStrikeColors.ERROR}❌ Transaction trace failed{HexStrikeColors.RESET}")
+        return result
+
+    @mcp.tool()
+    def web3_bug_bounty_recon(
+        contract_address: str = "",
+        project_path: str = "",
+        rpc_url: str = "",
+        network: str = "mainnet",
+        etherscan_api_key: str = ""
+    ) -> Dict[str, Any]:
+        """
+        Full Web3 bug bounty reconnaissance workflow.
+
+        Step 1 – Source fetch: Retrieve verified source from Etherscan.
+        Step 2 – Decompile: Heimdall bytecode decompilation for unverified contracts.
+        Step 3 – RPC recon: Check for exposed dangerous JSON-RPC methods.
+        Step 4 – Static analysis: Slither full analysis on local source.
+        Step 5 – Lint: solhint code quality and security linting.
+
+        Use this as the first step for any Web3 bug bounty target.
+
+        Args:
+            contract_address: Target contract address (0x…)
+            project_path: Local project directory (if source available)
+            rpc_url: JSON-RPC endpoint for on-chain interaction
+            network: Blockchain network (mainnet, polygon, bsc, arbitrum, optimism, base)
+            etherscan_api_key: Etherscan API key for source retrieval
+
+        Returns:
+            Consolidated reconnaissance report
+        """
+        data = {
+            "contract_address": contract_address,
+            "project_path": project_path,
+            "rpc_url": rpc_url,
+            "network": network,
+            "etherscan_api_key": etherscan_api_key
+        }
+        logger.info(f"{HexStrikeColors.HIGHLIGHT_RED} 🕵️  Starting Web3 bug bounty recon {HexStrikeColors.RESET}")
+        result = hexstrike_client.safe_post("api/web3/bug-bounty-recon", data)
+        if result.get("success"):
+            phases = result.get("phases", [])
+            logger.info(f"{HexStrikeColors.SUCCESS}✅ Web3 recon completed – {len(phases)} phases run{HexStrikeColors.RESET}")
+        else:
+            logger.error(f"{HexStrikeColors.ERROR}❌ Web3 recon failed{HexStrikeColors.RESET}")
+        return result
+
+    # ── Web3 AI Agents / Prompt Templates ───────────────────────────────────
+
+    @mcp.tool()
+    def web3_audit_advisor(
+        vulnerability_type: str,
+        contract_snippet: str = "",
+        additional_context: str = ""
+    ) -> Dict[str, Any]:
+        """
+        AI-powered Web3 bug bounty advisor that provides targeted guidance for
+        specific vulnerability types.
+
+        This tool generates expert audit methodology, exploitation steps,
+        proof-of-concept outlines, and remediation advice for a given
+        vulnerability class.  It is designed to guide the AI agent through
+        the full bug bounty lifecycle.
+
+        Supported vulnerability types:
+          reentrancy, flash_loan, price_oracle, access_control, proxy_upgrade,
+          front_running, signature_replay, read_only_reentrancy, donation_attack
+
+        Args:
+            vulnerability_type: The vulnerability class to get guidance for
+            contract_snippet: Optional Solidity snippet for context-aware advice
+            additional_context: Any additional context (protocol name, scope, etc.)
+
+        Returns:
+            Structured advisory with methodology, exploitation steps, and PoC outline
+        """
+        ADVISORIES: Dict[str, Any] = {
+            "reentrancy": {
+                "description": "Reentrancy attack – external call before state update",
+                "severity": "CRITICAL",
+                "detection_steps": [
+                    "Run: slither <target> --detect reentrancy-eth,reentrancy-no-eth",
+                    "Search for CEI (Check-Effects-Interactions) pattern violations",
+                    "Look for external calls (transfer, call, delegatecall) BEFORE state changes",
+                    "Check for cross-function reentrancy via shared state variables",
+                    "Use Foundry fork test to simulate reentrancy callback"
+                ],
+                "exploitation_steps": [
+                    "1. Deploy attacker contract with receive()/fallback() that re-enters target",
+                    "2. Call vulnerable function (e.g. withdraw)",
+                    "3. In callback, re-call withdraw before balance is updated",
+                    "4. Drain target contract",
+                    "5. Document with forge test --fork-url <mainnet-rpc> -vvvv"
+                ],
+                "poc_template": "forge create AttackerReentrancy --fork-url $RPC --constructor-args $TARGET",
+                "remediation": "Apply Checks-Effects-Interactions; use ReentrancyGuard; prefer pull-over-push"
+            },
+            "flash_loan": {
+                "description": "Flash loan attack – borrow, manipulate, repay in one tx",
+                "severity": "CRITICAL",
+                "detection_steps": [
+                    "Look for spot-price oracles (getReserves(), balanceOf()) used for pricing",
+                    "Run: slither <target> --detect price-manipulation-via-token-transfer",
+                    "Identify functions that change state based on token balances in same tx",
+                    "Check if protocol uses TWAP or Chainlink – if not, vulnerable"
+                ],
+                "exploitation_steps": [
+                    "1. Borrow large amount via Aave/Uniswap flash loan",
+                    "2. Manipulate spot price in victim AMM",
+                    "3. Call victim protocol function that reads manipulated price",
+                    "4. Profit from inflated/deflated price reading",
+                    "5. Repay flash loan in same transaction"
+                ],
+                "poc_template": "forge test --match-test testFlashLoanAttack --fork-url $RPC -vvvv",
+                "remediation": "Use TWAP oracles (Uniswap V3 TWAP, Chainlink); validate price deviation"
+            },
+            "price_oracle": {
+                "description": "Price oracle manipulation – spot vs TWAP, oracle staleness",
+                "severity": "HIGH",
+                "detection_steps": [
+                    "Search for getReserves(), token0(), token1() price reads",
+                    "Check if lastUpdated timestamp is validated (Chainlink staleness)",
+                    "Verify minAnswer/maxAnswer circuit breakers on Chainlink feeds",
+                    "Run: slither <target> --detect tainted-external-call"
+                ],
+                "exploitation_steps": [
+                    "1. Identify spot price dependency",
+                    "2. Flash loan to move spot price significantly",
+                    "3. Trigger vulnerable function using manipulated price",
+                    "4. Extract value before price reverts"
+                ],
+                "poc_template": "cast call $ORACLE 'latestRoundData()' --rpc-url $RPC",
+                "remediation": "Use time-weighted average prices; validate oracle freshness; use multiple oracles"
+            },
+            "access_control": {
+                "description": "Missing/incorrect access control on privileged functions",
+                "severity": "HIGH",
+                "detection_steps": [
+                    "Run: slither <target> --detect arbitrary-send-eth,controlled-delegatecall,tx-origin",
+                    "Search for onlyOwner/onlyAdmin modifiers – are they on ALL sensitive functions?",
+                    "Check initialize() functions – can they be called multiple times?",
+                    "Verify role-based access (OpenZeppelin AccessControl) is correctly configured"
+                ],
+                "exploitation_steps": [
+                    "1. Identify unprotected function (no modifier or wrong modifier)",
+                    "2. Call function directly with attacker address",
+                    "3. Drain funds, change critical parameters, or take ownership"
+                ],
+                "poc_template": "cast send $TARGET 'initialize(address)' $ATTACKER --rpc-url $RPC --private-key $PK",
+                "remediation": "Apply onlyOwner/role modifiers; use OpenZeppelin AccessControl; add initializer guards"
+            },
+            "proxy_upgrade": {
+                "description": "Uninitialized proxy, storage collision, or unprotected upgrade",
+                "severity": "CRITICAL",
+                "detection_steps": [
+                    "Run: slither <target> --detect unprotected-upgrade,uninitialized-state",
+                    "Check EIP-1967 slots: cast storage $PROXY $IMPL_SLOT --rpc-url $RPC",
+                    "Verify _authorizeUpgrade() requires admin check",
+                    "Check for storage layout compatibility between proxy versions"
+                ],
+                "exploitation_steps": [
+                    "1. Call uninitialised initialize() to become owner",
+                    "2. Call upgradeTo() to point to attacker implementation",
+                    "3. Call selfdestruct or drain via attacker implementation"
+                ],
+                "poc_template": "cast send $PROXY 'initialize(address)' $ATTACKER --rpc-url $RPC --private-key $PK",
+                "remediation": "Add initializer guards (_initialized); restrict upgradeTo; use OpenZeppelin UUPS/Transparent patterns"
+            },
+            "front_running": {
+                "description": "Transaction ordering dependence – frontrun/backrun/sandwich",
+                "severity": "MEDIUM",
+                "detection_steps": [
+                    "Look for functions where order matters (swaps, auctions, reveals)",
+                    "Check if slippage/deadline parameters are enforced",
+                    "Search for block.timestamp or block.number as randomness source"
+                ],
+                "exploitation_steps": [
+                    "1. Monitor mempool for target transactions",
+                    "2. Submit frontrun tx with higher gas price",
+                    "3. Extract value from price movement or reveal"
+                ],
+                "poc_template": "cast tx $TX_HASH --rpc-url $RPC",
+                "remediation": "Use commit-reveal; enforce slippage limits; use private mempools (Flashbots)"
+            },
+            "signature_replay": {
+                "description": "Missing nonce or chainId allows signature reuse",
+                "severity": "HIGH",
+                "detection_steps": [
+                    "Search for ecrecover() calls",
+                    "Check if nonce is incremented and validated",
+                    "Check if chainId is included in signed data (EIP-712)",
+                    "Verify signatures cannot be reused cross-chain"
+                ],
+                "exploitation_steps": [
+                    "1. Capture a valid signed message",
+                    "2. Replay on same or different chain",
+                    "3. Execute privileged operation multiple times"
+                ],
+                "poc_template": "cast send $TARGET 'executeWithSig(bytes)' $SIG --rpc-url $RPC --private-key $PK",
+                "remediation": "Include nonce, chainId, and expiry in signed data; use EIP-712; invalidate used signatures"
+            },
+            "read_only_reentrancy": {
+                "description": "View function reentrancy via cross-contract price manipulation",
+                "severity": "HIGH",
+                "detection_steps": [
+                    "Look for view functions that read balance/price during another contract's callback",
+                    "Search for use of curve.get_virtual_price() or similar during ETH transfers",
+                    "Check if protocol uses another protocol's view during receive()/fallback()"
+                ],
+                "exploitation_steps": [
+                    "1. Trigger callback (e.g. ETH transfer) in protocol A",
+                    "2. During callback, call protocol B which reads protocol A's view function",
+                    "3. Protocol A's state is inconsistent during the callback",
+                    "4. Protocol B makes decision based on incorrect state"
+                ],
+                "poc_template": "forge test --match-test testReadOnlyReentrancy --fork-url $RPC -vvvv",
+                "remediation": "Add reentrancy guards to view functions; avoid cross-protocol reads during callbacks"
+            },
+            "donation_attack": {
+                "description": "Token donation inflates share price – first-depositor attack",
+                "severity": "HIGH",
+                "detection_steps": [
+                    "Check vault/pool share calculation: totalAssets() / totalSupply()",
+                    "Verify first deposit cannot result in 0 shares",
+                    "Check if virtual price is used (e.g. totalAssets + 1)"
+                ],
+                "exploitation_steps": [
+                    "1. Be first depositor – deposit 1 wei, get 1 share",
+                    "2. Donate large amount of tokens directly to vault",
+                    "3. Second depositor's shares round down to 0",
+                    "4. Attacker redeems 1 share for all donated + deposited funds"
+                ],
+                "poc_template": "forge test --match-test testDonationAttack --fork-url $RPC -vvvv",
+                "remediation": "Mint dead shares on first deposit; use virtual assets/shares; add minimum deposit"
+            }
+        }
+
+        advisory = ADVISORIES.get(vulnerability_type.lower())
+        if not advisory:
+            available = list(ADVISORIES.keys())
+            return {
+                "success": False,
+                "error": f"Unknown vulnerability type: {vulnerability_type}",
+                "available_types": available
+            }
+
+        response = {
+            "success": True,
+            "vulnerability_type": vulnerability_type,
+            "advisory": advisory,
+            "timestamp": datetime.now().isoformat()
+        }
+
+        if contract_snippet:
+            response["context_note"] = (
+                f"Contract snippet provided ({len(contract_snippet)} chars). "
+                "Run slither_analyze or mythril_analyze on the full file for precise findings."
+            )
+
+        if additional_context:
+            response["additional_context"] = additional_context
+
+        logger.info(f"{HexStrikeColors.HIGHLIGHT_PURPLE} 📚 Web3 audit advisory: {vulnerability_type} {HexStrikeColors.RESET}")
+        return response
+
+    @mcp.tool()
+    def web3_scope_analyzer(
+        scope_urls: str,
+        bounty_platform: str = "immunefi",
+        focus_areas: str = ""
+    ) -> Dict[str, Any]:
+        """
+        Analyze a Web3 bug bounty scope to generate a prioritized attack plan.
+
+        Given a list of contracts/repositories in scope, this tool:
+        - Identifies high-value targets (treasury, bridge, DEX, lending)
+        - Recommends tools and checks per target type
+        - Generates a prioritized list of vulnerability classes to investigate
+        - Suggests Foundry fork test setup for the target ecosystem
+
+        Supported platforms: immunefi, code4rena, sherlock, hats_finance, cantina
+
+        Args:
+            scope_urls: Newline or comma-separated list of contract addresses or GitHub URLs
+            bounty_platform: Bug bounty platform (affects severity/payout framing)
+            focus_areas: Comma-separated priority areas (e.g. "reentrancy,access_control")
+
+        Returns:
+            Prioritized attack plan with tool recommendations
+        """
+        PLATFORM_NOTES = {
+            "immunefi": "High payouts for Critical/High. Focus on fund-at-risk bugs. Smart contract bugs only.",
+            "code4rena": "Judge-based. Medium/High findings valued. Gas optimisation counts. Competitive.",
+            "sherlock": "Strict validity criteria. Must show clear impact. Contest-based.",
+            "hats_finance": "On-chain bug bounty. Permissionless. Immediate payout on acceptance.",
+            "cantina": "Invite-only audits. Premium targets. High bar for findings."
+        }
+
+        TARGET_CLASSIFIERS = {
+            "bridge": {
+                "risk": "CRITICAL",
+                "checks": ["cross_chain_message_validation", "replay_protection", "admin_keys", "oracle_manipulation"],
+                "tools": ["slither_analyze", "mythril_analyze", "web3_access_control_check", "web3_proxy_analysis"]
+            },
+            "dex": {
+                "risk": "CRITICAL",
+                "checks": ["flash_loan", "price_oracle", "front_running", "fee_manipulation", "donation_attack"],
+                "tools": ["slither_analyze", "web3_flash_loan_analysis", "web3_oracle_manipulation_check", "foundry_forge_run"]
+            },
+            "lending": {
+                "risk": "CRITICAL",
+                "checks": ["oracle_manipulation", "liquidation_mev", "flash_loan", "interest_rate_manipulation"],
+                "tools": ["slither_analyze", "web3_flash_loan_analysis", "web3_oracle_manipulation_check", "web3_mev_analysis"]
+            },
+            "vault": {
+                "risk": "HIGH",
+                "checks": ["donation_attack", "share_inflation", "reentrancy", "flash_loan"],
+                "tools": ["slither_analyze", "web3_reentrancy_check", "web3_flash_loan_analysis", "echidna_fuzz"]
+            },
+            "token": {
+                "risk": "MEDIUM",
+                "checks": ["unchecked_transfer", "fee_on_transfer", "rebasing", "admin_mint"],
+                "tools": ["slither_analyze", "web3_token_analysis", "solidity_lint"]
+            },
+            "governance": {
+                "risk": "HIGH",
+                "checks": ["flash_loan_governance", "vote_manipulation", "timelock_bypass", "signature_replay"],
+                "tools": ["slither_analyze", "web3_access_control_check", "mythril_analyze"]
+            },
+            "proxy": {
+                "risk": "CRITICAL",
+                "checks": ["unprotected_upgrade", "storage_collision", "uninitialised_impl", "admin_takeover"],
+                "tools": ["web3_proxy_analysis", "slither_analyze", "cast_command"]
+            }
+        }
+
+        targets = [u.strip() for u in scope_urls.replace(",", "\n").splitlines() if u.strip()]
+        platform_note = PLATFORM_NOTES.get(bounty_platform.lower(), "Review platform-specific rules before submitting.")
+
+        attack_plan = {
+            "success": True,
+            "bounty_platform": bounty_platform,
+            "platform_note": platform_note,
+            "targets": targets,
+            "target_count": len(targets),
+            "recommended_workflow": [],
+            "priority_checks": [],
+            "timestamp": datetime.now().isoformat()
+        }
+
+        # Classify targets by keyword
+        for target in targets:
+            t_lower = target.lower()
+            for classifier, info in TARGET_CLASSIFIERS.items():
+                if classifier in t_lower:
+                    attack_plan["recommended_workflow"].append({
+                        "target": target,
+                        "classifier": classifier,
+                        "risk": info["risk"],
+                        "checks": info["checks"],
+                        "recommended_tools": info["tools"]
+                    })
+                    for check in info["checks"]:
+                        if check not in attack_plan["priority_checks"]:
+                            attack_plan["priority_checks"].append(check)
+                    break
+
+        if focus_areas:
+            attack_plan["focus_areas"] = [f.strip() for f in focus_areas.split(",")]
+
+        # Default workflow if no classifiers matched
+        if not attack_plan["recommended_workflow"]:
+            attack_plan["recommended_workflow"].append({
+                "target": "all targets",
+                "classifier": "generic",
+                "risk": "UNKNOWN",
+                "checks": ["reentrancy", "access_control", "flash_loan", "oracle_manipulation", "proxy_upgrade"],
+                "recommended_tools": [
+                    "web3_bug_bounty_recon",
+                    "web3_smart_contract_audit",
+                    "slither_analyze",
+                    "mythril_analyze",
+                    "echidna_fuzz"
+                ]
+            })
+
+        # Always start with recon
+        attack_plan["first_steps"] = [
+            "1. Run web3_bug_bounty_recon on each contract address",
+            "2. Fetch verified source via etherscan_recon",
+            "3. Run web3_smart_contract_audit on local source",
+            "4. Review Slither findings by severity (HIGH/CRITICAL first)",
+            "5. Write Foundry fork tests to prove exploitability",
+            "6. Document impact, root cause, and PoC before submitting"
+        ]
+
+        logger.info(f"{HexStrikeColors.HIGHLIGHT_BLUE} 🎯 Web3 scope analysis completed – {len(targets)} targets {HexStrikeColors.RESET}")
+        return attack_plan
+
     return mcp
 
 def parse_args():

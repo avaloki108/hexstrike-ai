@@ -1,4 +1,4 @@
-# HexStrike AI MCP Agents v6.0
+# HexStrike AI MCP Agents v7.0
 #
 # INSTALLATION COMMANDS:
 # python3 -m venv hexstrike_env
@@ -39,10 +39,20 @@ angr>=9.2.0,<10.0.0             # Binary analysis (import angr)
 bcrypt==4.0.1                   # Pin bcrypt version for passlib compatibility (fixes pwntools dependency issue)
 
 # ============================================================================
+# WEB3 / BLOCKCHAIN SECURITY (v7.0 – Web3 Bug Bounty Module)
+# ============================================================================
+web3>=6.0.0,<8.0.0              # Ethereum Python SDK (web3.py) – RPC calls, ABI decoding, signing
+eth-abi>=4.0.0,<5.0.0           # Low-level ABI encoding/decoding (used by abi-decoder endpoint)
+eth-utils>=2.3.0,<4.0.0         # Ethereum utility functions (hex, checksum addresses, keccak)
+eth-account>=0.10.0,<1.0.0      # Key management and EIP-712 signing helpers
+slither-analyzer>=0.10.0,<1.0.0 # Solidity static analysis (pip-installable core; CLI: slither)
+mythril>=0.24.0,<1.0.0          # EVM symbolic execution (pip-installable; CLI: myth)
+
+# ============================================================================
 # EXTERNAL SECURITY TOOLS (150+ Tools - Install separately)
 # ============================================================================
 #
-# HexStrike v6.0 integrates with 150+ external security tools that must be
+# HexStrike v7.0 integrates with 150+ external security tools that must be
 # installed separately from their official sources:
 #
 # 🔍 Network & Reconnaissance (25+ tools):
@@ -74,11 +84,24 @@ bcrypt==4.0.1                   # Pin bcrypt version for passlib compatibility (
 # - sherlock, social-analyzer, recon-ng, maltego, spiderfoot
 # - shodan-cli, censys-cli, have-i-been-pwned
 #
+# ⛓️  Web3 / Blockchain (NEW in v7.0 – slither and mythril bundled in requirements above):
+# - slither     : already included via `slither-analyzer` in requirements.txt
+# - mythril     : already included via `mythril` in requirements.txt
+# - manticore   : pip install manticore         (symbolic execution – heavy dep, install separately)
+# - echidna     : https://github.com/crytic/echidna/releases (binary release)
+# - foundry     : curl -L https://foundry.paradigm.xyz | bash && foundryup
+#                  (includes forge, cast, anvil, chisel)
+# - heimdall    : cargo install heimdall-rs     (EVM decompiler, requires Rust)
+# - solhint     : npm install -g solhint        (Solidity linter, requires Node.js)
+# - 4naly3er    : npm install -g 4naly3er       (gas/security report generator)
+# - solc-select : pip install solc-select       (manage solc compiler versions)
+#
 # Installation Notes:
 # 1. Kali Linux 2024.1+ includes most tools by default
 # 2. Ubuntu/Debian users should install tools from official repositories
 # 3. Some tools require compilation from source or additional setup
 # 4. Cloud tools require API keys and authentication configuration
 # 5. Browser Agent requires Chrome/Chromium and ChromeDriver installation
+# 6. Web3 tools require Node.js ≥ 18 (solhint, 4naly3er) and Rust (heimdall)
 #
 # For complete installation instructions and setup guides, see README.md
