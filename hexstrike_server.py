@@ -17537,13 +17537,10 @@ def abi_decoder():
 
         script = f"""
 import json
-from eth_abi import decode
-from eth_utils import function_signature_to_4byte_selector
 
 abi = json.loads({repr(abi_str)})
 calldata = {repr(calldata)}
 results = {{"decoded": []}}
-
 try:
     from web3 import Web3
     w3 = Web3()
