@@ -6231,10 +6231,7 @@ def setup_mcp_server(hexstrike_client: HexStrikeClient) -> FastMCP:
 
         Supported vulnerability types:
           reentrancy, flash_loan, price_oracle, access_control, proxy_upgrade,
-          integer_overflow, front_running, mev, token_inflation, signature_replay,
-          cross_chain_bridge, governance_attack, sandwich_attack, donation_attack,
-          read_only_reentrancy, first_deposit_attack, storage_collision,
-          selfdestruct_attack, unchecked_return, griefing
+          front_running, signature_replay, read_only_reentrancy, donation_attack
 
         Args:
             vulnerability_type: The vulnerability class to get guidance for
