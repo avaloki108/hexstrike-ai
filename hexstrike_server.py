@@ -17591,7 +17591,7 @@ def etherscan_recon():
             "bsc": "https://api.bscscan.com/api",
             "arbitrum": "https://api.arbiscan.io/api",
             "optimism": "https://api-optimistic.etherscan.io/api",
-            "avalanche": "https://api.snowtrace.io/api",
+            "avalanche": "https://api.snowscan.xyz/api",
             "base": "https://api.basescan.org/api",
         }
         base_url = base_urls.get(network, base_urls["mainnet"])
